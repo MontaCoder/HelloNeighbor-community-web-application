@@ -1,11 +1,22 @@
 import { Bell } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export function AlertsPreview() {
-  const alerts = [
-    { id: 1, type: "urgent", message: "Community meeting tonight at 7 PM" },
-    { id: 2, type: "info", message: "New neighborhood watch schedule posted" },
-  ];
+  const { data: alerts } = useQuery({
+    queryKey: ["alerts-preview"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("alerts")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(3);
+      
+      if (error) throw error;
+      return data;
+    },
+  });
 
   return (
     <Card className="animate-fade-in">
@@ -15,14 +26,19 @@ export function AlertsPreview() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {alerts.map((alert) => (
+          {alerts?.map((alert) => (
             <div
               key={alert.id}
               className={`rounded-lg p-3 ${
-                alert.type === "urgent" ? "bg-accent/10" : "bg-secondary/10"
+                alert.urgency === "high"
+                  ? "bg-red-100"
+                  : alert.urgency === "medium"
+                  ? "bg-yellow-100"
+                  : "bg-blue-100"
               }`}
             >
-              <p className="text-sm">{alert.message}</p>
+              <h3 className="font-semibold">{alert.title}</h3>
+              <p className="text-sm text-gray-600">{alert.message}</p>
             </div>
           ))}
         </div>

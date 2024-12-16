@@ -1,18 +1,22 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AlertsPreview } from "@/components/dashboard/AlertsPreview";
 import { EventsPreview } from "@/components/dashboard/EventsPreview";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 const Index = () => {
+  const { profile } = useAuth();
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-[#FAF9F6]">
         <AppSidebar />
         <main className="flex-1 p-6">
-          <SidebarTrigger className="mb-6" />
           <div className="max-w-6xl mx-auto">
             <header className="mb-8">
-              <h1 className="text-4xl font-bold text-primary mb-2">Welcome to Hello Neighbor</h1>
+              <h1 className="text-4xl font-bold text-primary mb-2">
+                Welcome, {profile?.full_name || "Neighbor"}
+              </h1>
               <p className="text-lg text-gray-600">Stay connected with your community</p>
             </header>
             

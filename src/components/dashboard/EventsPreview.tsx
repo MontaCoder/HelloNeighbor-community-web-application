@@ -1,23 +1,23 @@
 import { Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export function EventsPreview() {
-  const events = [
-    {
-      id: 1,
-      title: "Community BBQ",
-      date: "2024-03-15",
-      time: "12:00 PM",
-      location: "Central Park",
+  const { data: events } = useQuery({
+    queryKey: ["events-preview"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .gte("start_time", new Date().toISOString())
+        .order("start_time", { ascending: true })
+        .limit(3);
+      
+      if (error) throw error;
+      return data;
     },
-    {
-      id: 2,
-      title: "Garden Club Meeting",
-      date: "2024-03-17",
-      time: "10:00 AM",
-      location: "Community Center",
-    },
-  ];
+  });
 
   return (
     <Card className="animate-fade-in">
@@ -27,11 +27,12 @@ export function EventsPreview() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {events.map((event) => (
+          {events?.map((event) => (
             <div key={event.id} className="rounded-lg bg-secondary/10 p-3">
               <h3 className="font-semibold">{event.title}</h3>
               <p className="text-sm text-gray-600">
-                {event.date} at {event.time}
+                {new Date(event.start_time).toLocaleDateString()} at{" "}
+                {new Date(event.start_time).toLocaleTimeString()}
               </p>
               <p className="text-sm text-gray-600">{event.location}</p>
             </div>
