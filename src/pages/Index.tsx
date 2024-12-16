@@ -1,13 +1,29 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/layout/AppSidebar";
+import { AlertsPreview } from "@/components/dashboard/AlertsPreview";
+import { EventsPreview } from "@/components/dashboard/EventsPreview";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-[#FAF9F6]">
+        <AppSidebar />
+        <main className="flex-1 p-6">
+          <SidebarTrigger className="mb-6" />
+          <div className="max-w-6xl mx-auto">
+            <header className="mb-8">
+              <h1 className="text-4xl font-bold text-primary mb-2">Welcome to Hello Neighbor</h1>
+              <p className="text-lg text-gray-600">Stay connected with your community</p>
+            </header>
+            
+            <div className="grid gap-6 md:grid-cols-2">
+              <AlertsPreview />
+              <EventsPreview />
+            </div>
+          </div>
+        </main>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
