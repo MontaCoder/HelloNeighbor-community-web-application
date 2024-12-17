@@ -1,13 +1,13 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MessageSquare } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
@@ -18,6 +18,7 @@ export default function Neighbors() {
   const [selectedNeighbor, setSelectedNeighbor] = useState<any>(null);
   const [messageContent, setMessageContent] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: neighbors, isLoading } = useQuery({
     queryKey: ["neighbors"],
@@ -32,7 +33,7 @@ export default function Neighbors() {
     },
   });
 
-  const { data: messages } = useQuery({
+  const { data: messages, refetch: refetchMessages } = useQuery({
     queryKey: ["private-messages", selectedNeighbor?.id],
     enabled: !!selectedNeighbor,
     queryFn: async () => {
@@ -51,6 +52,30 @@ export default function Neighbors() {
     },
   });
 
+  useEffect(() => {
+    if (!selectedNeighbor) return;
+
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `or(and(sender_id.eq.${user?.id},receiver_id.eq.${selectedNeighbor.id}),and(sender_id.eq.${selectedNeighbor.id},receiver_id.eq.${user?.id}))`
+        },
+        () => {
+          refetchMessages();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedNeighbor, user?.id, refetchMessages]);
+
   const handleSendPrivateMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageContent.trim() || !selectedNeighbor) return;
@@ -66,6 +91,7 @@ export default function Neighbors() {
 
       if (error) throw error;
       setMessageContent("");
+      await refetchMessages();
       toast({
         title: "Message sent",
         description: `Message sent to ${selectedNeighbor.full_name || selectedNeighbor.username}`,

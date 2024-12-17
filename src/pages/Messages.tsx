@@ -1,6 +1,6 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -15,6 +15,7 @@ export default function Messages() {
   const { user, profile } = useAuth();
   const [newMessage, setNewMessage] = useState("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: messages, refetch } = useQuery({
     queryKey: ["public-messages"],
@@ -29,8 +30,8 @@ export default function Messages() {
             username
           )
         `)
-        .is('receiver_id', null) // Only get public messages
-        .order("created_at", { ascending: false })
+        .is('receiver_id', null)
+        .order("created_at", { ascending: true })
         .limit(50);
       
       if (error) throw error;
@@ -70,11 +71,12 @@ export default function Messages() {
         .insert({
           content: newMessage.trim(),
           sender_id: user?.id,
-          receiver_id: null // null means public message
+          receiver_id: null
         });
 
       if (error) throw error;
       setNewMessage("");
+      await refetch();
     } catch (error) {
       toast({
         variant: "destructive",
@@ -100,7 +102,7 @@ export default function Messages() {
               </div>
             </div>
 
-            <div className="flex flex-col-reverse space-y-reverse space-y-4 mb-6">
+            <div className="flex flex-col space-y-4 mb-6 h-[calc(100vh-250px)] overflow-y-auto">
               {messages?.map((message) => (
                 <Card key={message.id} className={`${message.sender_id === user?.id ? 'ml-auto bg-primary/5' : ''} max-w-[80%]`}>
                   <CardContent className="p-4">
