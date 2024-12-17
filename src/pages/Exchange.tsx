@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -12,10 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
+import { useState } from "react";
 
 export default function Exchange() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [editingItem, setEditingItem] = useState(null);
   const form = useForm({
     defaultValues: {
       title: "",
@@ -39,11 +41,34 @@ export default function Exchange() {
     },
   });
 
-  const onSubmit = async (values: any) => {
+  const handleDelete = async (itemId) => {
+    const { error } = await supabase
+      .from("marketplace_items")
+      .delete()
+      .eq("id", itemId);
+
+    if (error) {
+      toast({
+        title: "Error deleting item",
+        description: "Please try again later.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Item deleted",
+      description: "The item has been removed successfully."
+    });
+    refetch();
+  };
+
+  const onSubmit = async (values) => {
     try {
       const { error } = await supabase
         .from("marketplace_items")
-        .insert({
+        .upsert({
+          id: editingItem?.id,
           title: values.title,
           description: values.description,
           price: values.price ? parseFloat(values.price) : null,
@@ -54,15 +79,16 @@ export default function Exchange() {
       if (error) throw error;
 
       toast({
-        title: "Item listed successfully",
-        description: "Your item has been posted to the marketplace."
+        title: editingItem ? "Item updated" : "Item listed successfully",
+        description: editingItem ? "Your item has been updated." : "Your item has been posted to the marketplace."
       });
 
+      setEditingItem(null);
       form.reset();
       refetch();
     } catch (error) {
       toast({
-        title: "Error listing item",
+        title: editingItem ? "Error updating item" : "Error listing item",
         description: "Please try again later.",
         variant: "destructive"
       });
@@ -85,7 +111,7 @@ export default function Exchange() {
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>List New Item</DialogTitle>
+                    <DialogTitle>{editingItem ? "Edit Item" : "List New Item"}</DialogTitle>
                   </DialogHeader>
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -149,7 +175,9 @@ export default function Exchange() {
                           </FormItem>
                         )}
                       />
-                      <Button type="submit" className="w-full">List Item</Button>
+                      <Button type="submit" className="w-full">
+                        {editingItem ? "Update Item" : "List Item"}
+                      </Button>
                     </form>
                   </Form>
                 </DialogContent>
@@ -160,8 +188,38 @@ export default function Exchange() {
               {items?.map((item) => (
                 <Card key={item.id}>
                   <CardHeader>
-                    <CardTitle>{item.title}</CardTitle>
-                    <p className="text-sm text-gray-500">{item.category}</p>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle>{item.title}</CardTitle>
+                        <p className="text-sm text-gray-500">{item.category}</p>
+                      </div>
+                      {user && item.created_by === user.id && (
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setEditingItem(item);
+                              form.reset({
+                                title: item.title,
+                                description: item.description || "",
+                                price: item.price?.toString() || "",
+                                category: item.category
+                              });
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(item.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <p>{item.description}</p>
