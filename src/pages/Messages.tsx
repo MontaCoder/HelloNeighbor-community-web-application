@@ -1,21 +1,19 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageSquare } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { MessageItem } from "@/components/messages/MessageItem";
 
 export default function Messages() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [newMessage, setNewMessage] = useState("");
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const { data: messages, refetch } = useQuery({
     queryKey: ["public-messages"],
@@ -45,7 +43,7 @@ export default function Messages() {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*', // Listen for all events (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'messages',
           filter: 'receiver_id=null'
@@ -104,29 +102,12 @@ export default function Messages() {
 
             <div className="flex flex-col space-y-4 mb-6 h-[calc(100vh-250px)] overflow-y-auto">
               {messages?.map((message) => (
-                <Card key={message.id} className={`${message.sender_id === user?.id ? 'ml-auto bg-primary/5' : ''} max-w-[80%]`}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={message.sender.avatar_url || ''} />
-                        <AvatarFallback>
-                          {message.sender.full_name?.charAt(0) || 'N'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="font-semibold text-sm">
-                            {message.sender.full_name || message.sender.username}
-                          </p>
-                          <span className="text-xs text-gray-500">
-                            {new Date(message.created_at).toLocaleTimeString()}
-                          </span>
-                        </div>
-                        <p className="text-gray-600">{message.content}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <MessageItem
+                  key={message.id}
+                  message={message}
+                  currentUserId={user?.id}
+                  onMessageUpdate={refetch}
+                />
               ))}
             </div>
 
