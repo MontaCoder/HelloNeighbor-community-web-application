@@ -33,7 +33,7 @@ function AppRoutes() {
     <Routes>
       {/* Public routes - accessible without authentication */}
       <Route path="/" element={<Index />} />
-      <Route path="/auth" element={user ? <Navigate to="/dashboard" /> : <AuthPage />} />
+      <Route path="/auth" element={<AuthPage />} />
       
       {/* Protected routes - require authentication */}
       <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
