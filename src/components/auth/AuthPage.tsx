@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -11,7 +13,7 @@ export default function AuthPage() {
   useEffect(() => {
     supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        navigate("/");
+        navigate("/dashboard");
       }
     });
   }, [navigate]);
@@ -19,8 +21,13 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#FAF9F6] p-4">
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center text-primary">Welcome to Hello Neighbor</CardTitle>
+        <CardHeader className="space-y-1">
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-2xl text-primary">Welcome Back</CardTitle>
+            <Button variant="ghost" asChild>
+              <Link to="/">Back to Home</Link>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Auth
