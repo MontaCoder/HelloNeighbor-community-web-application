@@ -20,7 +20,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   
   if (loading) return null;
-  if (!user) return <Navigate to="/" />;
+  if (!user) return <Navigate to="/auth" />;
   
   return <>{children}</>;
 }
@@ -30,7 +30,7 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Index />} />
+      <Route path="/" element={<Index />} />
       <Route path="/auth" element={user ? <Navigate to="/dashboard" /> : <AuthPage />} />
       <Route
         path="/dashboard"
