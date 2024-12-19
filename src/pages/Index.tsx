@@ -7,7 +7,9 @@ import { EventsPreview } from "@/components/dashboard/EventsPreview";
 import { LandingPage } from "@/components/landing/LandingPage";
 
 const Index = () => {
-  const { user, profile } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) return null;
 
   // If user is logged in, show the dashboard
   if (user) {
@@ -19,7 +21,7 @@ const Index = () => {
             <div className="max-w-6xl mx-auto">
               <header className="mb-8">
                 <h1 className="text-4xl font-bold text-primary mb-2">
-                  Welcome, {profile?.full_name || "Neighbor"}
+                  Welcome, {user?.email || "Neighbor"}
                 </h1>
                 <p className="text-lg text-gray-600">Stay connected with your community</p>
               </header>

@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./components/auth/AuthProvider";
+import { AuthProvider, useAuth } from "./components/auth/AuthProvider";
 import AuthPage from "./components/auth/AuthPage";
 import Index from "./pages/Index";
 import Events from "./pages/Events";
@@ -12,7 +12,6 @@ import Exchange from "./pages/Exchange";
 import Messages from "./pages/Messages";
 import Neighbors from "./pages/Neighbors";
 import Settings from "./pages/Settings";
-import { useAuth } from "./components/auth/AuthProvider";
 
 const queryClient = new QueryClient();
 
@@ -26,71 +25,24 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) return null;
 
   return (
     <Routes>
-      {/* Public routes */}
+      {/* Public routes - accessible without authentication */}
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={user ? <Navigate to="/dashboard" /> : <AuthPage />} />
       
-      {/* Protected routes */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Index />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/events"
-        element={
-          <ProtectedRoute>
-            <Events />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/alerts"
-        element={
-          <ProtectedRoute>
-            <Alerts />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/exchange"
-        element={
-          <ProtectedRoute>
-            <Exchange />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/messages"
-        element={
-          <ProtectedRoute>
-            <Messages />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/neighbors"
-        element={
-          <ProtectedRoute>
-            <Neighbors />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <Settings />
-          </ProtectedRoute>
-        }
-      />
+      {/* Protected routes - require authentication */}
+      <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+      <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
+      <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
+      <Route path="/exchange" element={<ProtectedRoute><Exchange /></ProtectedRoute>} />
+      <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+      <Route path="/neighbors" element={<ProtectedRoute><Neighbors /></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
     </Routes>
   );
 }
