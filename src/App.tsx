@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./components/auth/AuthProvider";
 import AuthPage from "./components/auth/AuthPage";
+import LocationSetup from "./pages/LocationSetup";
 import Index from "./pages/Index";
 import Events from "./pages/Events";
 import Alerts from "./pages/Alerts";
@@ -16,10 +17,15 @@ import Settings from "./pages/Settings";
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, profile } = useAuth();
   
   if (loading) return null;
   if (!user) return <Navigate to="/auth" />;
+  
+  // Redirect to location setup if user has no location set
+  if (!profile?.latitude || !profile?.longitude) {
+    return <Navigate to="/location-setup" />;
+  }
   
   return <>{children}</>;
 }
@@ -35,7 +41,12 @@ function AppRoutes() {
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<AuthPage />} />
       
-      {/* Protected routes - require authentication */}
+      {/* Location setup route - requires auth but no location */}
+      <Route path="/location-setup" element={
+        user ? <LocationSetup /> : <Navigate to="/auth" />
+      } />
+      
+      {/* Protected routes - require authentication and location */}
       <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
       <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
       <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
