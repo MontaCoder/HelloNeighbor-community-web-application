@@ -17,6 +17,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           message: string
+          neighborhood_id: string | null
           title: string
           type: string
           urgency: string
@@ -28,6 +29,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           message: string
+          neighborhood_id?: string | null
           title: string
           type: string
           urgency: string
@@ -39,6 +41,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           message?: string
+          neighborhood_id?: string | null
           title?: string
           type?: string
           urgency?: string
@@ -49,6 +52,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
             referencedColumns: ["id"]
           },
         ]
@@ -63,6 +73,7 @@ export type Database = {
           latitude: number | null
           location: string | null
           longitude: number | null
+          neighborhood_id: string | null
           start_time: string
           title: string
         }
@@ -75,6 +86,7 @@ export type Database = {
           latitude?: number | null
           location?: string | null
           longitude?: number | null
+          neighborhood_id?: string | null
           start_time: string
           title: string
         }
@@ -87,6 +99,7 @@ export type Database = {
           latitude?: number | null
           location?: string | null
           longitude?: number | null
+          neighborhood_id?: string | null
           start_time?: string
           title?: string
         }
@@ -96,6 +109,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
             referencedColumns: ["id"]
           },
         ]
@@ -109,6 +129,7 @@ export type Database = {
           id: string
           latitude: number | null
           longitude: number | null
+          neighborhood_id: string | null
           price: number | null
           status: string | null
           title: string
@@ -121,6 +142,7 @@ export type Database = {
           id?: string
           latitude?: number | null
           longitude?: number | null
+          neighborhood_id?: string | null
           price?: number | null
           status?: string | null
           title: string
@@ -133,6 +155,7 @@ export type Database = {
           id?: string
           latitude?: number | null
           longitude?: number | null
+          neighborhood_id?: string | null
           price?: number | null
           status?: string | null
           title?: string
@@ -143,6 +166,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_items_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
             referencedColumns: ["id"]
           },
         ]
@@ -189,6 +219,36 @@ export type Database = {
           },
         ]
       }
+      neighborhoods: {
+        Row: {
+          bounds: unknown | null
+          city: string
+          created_at: string
+          id: string
+          latitude: number
+          longitude: number
+          name: string
+        }
+        Insert: {
+          bounds?: unknown | null
+          city: string
+          created_at?: string
+          id?: string
+          latitude: number
+          longitude: number
+          name: string
+        }
+        Update: {
+          bounds?: unknown | null
+          city?: string
+          created_at?: string
+          id?: string
+          latitude?: number
+          longitude?: number
+          name?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -199,6 +259,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           neighborhood: string | null
+          neighborhood_id: string | null
           username: string | null
           visibility_radius: number | null
         }
@@ -211,6 +272,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           neighborhood?: string | null
+          neighborhood_id?: string | null
           username?: string | null
           visibility_radius?: number | null
         }
@@ -223,10 +285,19 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           neighborhood?: string | null
+          neighborhood_id?: string | null
           username?: string | null
           visibility_radius?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       spatial_ref_sys: {
         Row: {
@@ -694,6 +765,13 @@ export type Database = {
           geom2: unknown
         }
         Returns: boolean
+      }
+      find_neighborhood: {
+        Args: {
+          lat: number
+          lon: number
+        }
+        Returns: string
       }
       geography:
         | {
