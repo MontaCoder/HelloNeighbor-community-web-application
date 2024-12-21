@@ -3,20 +3,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
 
-interface LocationState {
-  latitude: number | null;
-  longitude: number | null;
-  loading: boolean;
-  error: string | null;
-}
-
 export const useLocation = () => {
-  const [state, setState] = useState<LocationState>({
-    latitude: null,
-    longitude: null,
-    loading: false,
-    error: null
-  });
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -28,13 +16,6 @@ export const useLocation = () => {
         .eq('id', user?.id);
 
       if (error) throw error;
-
-      setState(prev => ({
-        ...prev,
-        latitude,
-        longitude,
-        error: null
-      }));
 
       toast({
         title: "Location updated",
@@ -54,14 +35,10 @@ export const useLocation = () => {
   }, [user?.id, toast]);
 
   const detectLocation = useCallback(async () => {
-    setState(prev => ({ ...prev, loading: true, error: null }));
+    setLoading(true);
 
     if (!navigator.geolocation) {
-      setState(prev => ({
-        ...prev,
-        loading: false,
-        error: "Geolocation is not supported by your browser"
-      }));
+      setLoading(false);
       toast({
         title: "Geolocation not supported",
         description: "Your browser doesn't support location detection.",
@@ -84,14 +61,7 @@ export const useLocation = () => {
         position.coords.longitude
       );
 
-      setState(prev => ({
-        ...prev,
-        loading: false,
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        error: null
-      }));
-
+      setLoading(false);
       return success;
     } catch (error) {
       console.error('Geolocation error:', error);
@@ -111,24 +81,18 @@ export const useLocation = () => {
         }
       }
 
-      setState(prev => ({
-        ...prev,
-        loading: false,
-        error: errorMessage
-      }));
-
+      setLoading(false);
       toast({
         title: "Location detection failed",
         description: errorMessage,
         variant: "destructive"
       });
-
       return false;
     }
   }, [toast, updateUserLocation]);
 
   return {
-    ...state,
+    loading,
     detectLocation,
     updateUserLocation
   };
