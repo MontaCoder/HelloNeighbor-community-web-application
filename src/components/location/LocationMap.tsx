@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import { Map, View } from 'ol';
+import TileLayer from 'ol/layer/Tile';
+import OSM from 'ol/source/OSM';
+import { fromLonLat } from 'ol/proj';
+import { Feature } from 'ol';
+import { Point } from 'ol/geom';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import { Style, Circle, Fill, Stroke } from 'ol/style';
+import 'ol/ol.css';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-
-// Set access token once for the entire application
-mapboxgl.accessToken = 'pk.eyJ1IjoibG92YWJsZSIsImEiOiJjbHRwOWZjYnUwMXBqMmlvNjZ5ZWV2OTlwIn0.Fk7eIMGD9-ZL-N_3qnuVxg';
 
 interface LocationMapProps {
   events?: any[];
@@ -16,8 +21,8 @@ interface LocationMapProps {
 
 export function LocationMap({ events = [], alerts = [], items = [] }: LocationMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const map = useRef<Map | null>(null);
+  const vectorSource = useRef<VectorSource | null>(null);
   const { profile } = useAuth();
   const [mapLoaded, setMapLoaded] = useState(false);
   const { toast } = useToast();
@@ -27,40 +32,40 @@ export function LocationMap({ events = [], alerts = [], items = [] }: LocationMa
     if (!mapContainer.current) return;
 
     try {
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/light-v11',
-        center: [profile?.longitude || -98, profile?.latitude || 39],
-        zoom: profile?.latitude ? 12 : 3
+      // Create vector source for markers
+      vectorSource.current = new VectorSource();
+
+      // Create vector layer for markers
+      const vectorLayer = new VectorLayer({
+        source: vectorSource.current,
       });
 
-      map.current.on('load', () => {
-        setMapLoaded(true);
+      // Initialize map
+      map.current = new Map({
+        target: mapContainer.current,
+        layers: [
+          // OpenStreetMap layer
+          new TileLayer({
+            source: new OSM(),
+          }),
+          vectorLayer,
+        ],
+        view: new View({
+          center: fromLonLat([profile?.longitude || -98, profile?.latitude || 39]),
+          zoom: profile?.latitude ? 12 : 3,
+        }),
       });
 
-      // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      setMapLoaded(true);
 
-      // Error handling for map
-      map.current.on('error', (e) => {
-        console.error('Map error:', e);
-        toast({
-          title: 'Map Error',
-          description: 'There was an error loading the map. Please try refreshing the page.',
-          variant: 'destructive'
-        });
-      });
-
-      // Cleanup function
       return () => {
-        // Clear all markers
-        markersRef.current.forEach(marker => marker.remove());
-        markersRef.current = [];
-        
-        // Remove map
         if (map.current) {
-          map.current.remove();
+          map.current.dispose();
           map.current = null;
+        }
+        if (vectorSource.current) {
+          vectorSource.current.clear();
+          vectorSource.current = null;
         }
       };
     } catch (error) {
@@ -68,68 +73,78 @@ export function LocationMap({ events = [], alerts = [], items = [] }: LocationMa
       toast({
         title: 'Map Error',
         description: 'There was an error initializing the map. Please try refreshing the page.',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   }, []);
 
   // Add markers when map is loaded and data is available
   useEffect(() => {
-    if (!mapLoaded || !map.current) return;
+    if (!mapLoaded || !map.current || !vectorSource.current) return;
 
     try {
       // Clear existing markers
-      markersRef.current.forEach(marker => marker.remove());
-      markersRef.current = [];
+      vectorSource.current.clear();
+
+      // Style functions for different marker types
+      const createMarkerStyle = (color: string) => {
+        return new Style({
+          image: new Circle({
+            radius: 6,
+            fill: new Fill({ color }),
+            stroke: new Stroke({
+              color: '#fff',
+              width: 2,
+            }),
+          }),
+        });
+      };
 
       // Add event markers
       events.forEach(event => {
         if (event.latitude && event.longitude) {
-          const marker = new mapboxgl.Marker({ color: '#2F5233' })
-            .setLngLat([event.longitude, event.latitude])
-            .setPopup(new mapboxgl.Popup().setHTML(`
-              <h3 class="font-bold">${event.title}</h3>
-              <p>${event.description || ''}</p>
-            `))
-            .addTo(map.current!);
-          markersRef.current.push(marker);
+          const feature = new Feature({
+            geometry: new Point(fromLonLat([event.longitude, event.latitude])),
+            name: event.title,
+            description: event.description || '',
+          });
+          feature.setStyle(createMarkerStyle('#2F5233'));
+          vectorSource.current?.addFeature(feature);
         }
       });
 
       // Add alert markers
       alerts.forEach(alert => {
         if (alert.latitude && alert.longitude) {
-          const marker = new mapboxgl.Marker({ color: '#DC2626' })
-            .setLngLat([alert.longitude, alert.latitude])
-            .setPopup(new mapboxgl.Popup().setHTML(`
-              <h3 class="font-bold">${alert.title}</h3>
-              <p>${alert.message || ''}</p>
-            `))
-            .addTo(map.current!);
-          markersRef.current.push(marker);
+          const feature = new Feature({
+            geometry: new Point(fromLonLat([alert.longitude, alert.latitude])),
+            name: alert.title,
+            description: alert.message || '',
+          });
+          feature.setStyle(createMarkerStyle('#DC2626'));
+          vectorSource.current?.addFeature(feature);
         }
       });
 
       // Add marketplace item markers
       items.forEach(item => {
         if (item.latitude && item.longitude) {
-          const marker = new mapboxgl.Marker({ color: '#2563EB' })
-            .setLngLat([item.longitude, item.latitude])
-            .setPopup(new mapboxgl.Popup().setHTML(`
-              <h3 class="font-bold">${item.title}</h3>
-              <p>${item.description || ''}</p>
-              <p class="font-bold">${item.price ? `$${item.price}` : 'Free'}</p>
-            `))
-            .addTo(map.current!);
-          markersRef.current.push(marker);
+          const feature = new Feature({
+            geometry: new Point(fromLonLat([item.longitude, item.latitude])),
+            name: item.title,
+            description: `${item.description || ''}\n${item.price ? `$${item.price}` : 'Free'}`,
+          });
+          feature.setStyle(createMarkerStyle('#2563EB'));
+          vectorSource.current?.addFeature(feature);
         }
       });
+
     } catch (error) {
       console.error('Error adding markers:', error);
       toast({
         title: 'Map Error',
         description: 'There was an error adding markers to the map.',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   }, [mapLoaded, events, alerts, items]);
