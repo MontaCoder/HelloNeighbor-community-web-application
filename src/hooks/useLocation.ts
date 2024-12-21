@@ -8,11 +8,32 @@ export const useLocation = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
+  const findNeighborhood = async (latitude: number, longitude: number) => {
+    try {
+      const { data: neighborhood, error } = await supabase
+        .rpc('find_neighborhood', { lat: latitude, lon: longitude });
+
+      if (error) throw error;
+      return neighborhood;
+    } catch (error) {
+      console.error('Error finding neighborhood:', error);
+      return null;
+    }
+  };
+
   const updateUserLocation = useCallback(async (latitude: number, longitude: number) => {
     try {
+      // First find the neighborhood for this location
+      const neighborhood_id = await findNeighborhood(latitude, longitude);
+
       const { error } = await supabase
         .from('profiles')
-        .update({ latitude, longitude })
+        .update({ 
+          latitude, 
+          longitude,
+          neighborhood_id,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', user?.id);
 
       if (error) throw error;
@@ -49,11 +70,15 @@ export const useLocation = () => {
 
     try {
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
-        });
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          reject,
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          }
+        );
       });
 
       const success = await updateUserLocation(
@@ -70,13 +95,13 @@ export const useLocation = () => {
       if (error instanceof GeolocationPositionError) {
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = "Location access denied. Please enable location services.";
+            errorMessage = "Location access denied. Please enable location services in your browser settings.";
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = "Location information unavailable.";
+            errorMessage = "Location information unavailable. Please try again.";
             break;
           case error.TIMEOUT:
-            errorMessage = "Location request timed out.";
+            errorMessage = "Location request timed out. Please check your connection and try again.";
             break;
         }
       }

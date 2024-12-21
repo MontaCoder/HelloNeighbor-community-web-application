@@ -22,7 +22,6 @@ export function LocationMap({ events = [], alerts = [], items = [] }: LocationMa
     targetRef: mapContainer
   });
 
-  // Add markers when map is loaded and data is available
   useEffect(() => {
     if (!mapLoaded || !vectorSource) return;
 
