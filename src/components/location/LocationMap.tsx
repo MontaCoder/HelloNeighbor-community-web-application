@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Card } from '@/components/ui/card';
 import { useMap } from '@/hooks/useMap';
