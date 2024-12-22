@@ -52,6 +52,7 @@ export function useEvents() {
           location: values.location,
           start_time: values.start_time,
           end_time: values.end_time,
+          image_url: values.image_url,
         })
         .eq("id", eventId);
 

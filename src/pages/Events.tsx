@@ -1,32 +1,22 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useForm } from "react-hook-form";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
+import { Calendar } from "@/components/ui/calendar";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { EventForm } from "@/components/dashboard/events/EventForm";
+import { EventCard } from "@/components/dashboard/events/EventCard";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Events() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const { user } = useAuth();
   const { toast } = useToast();
-  const form = useForm({
-    defaultValues: {
-      title: "",
-      description: "",
-      location: "",
-      start_time: "",
-      end_time: ""
-    }
-  });
 
   const { data: events, refetch } = useQuery({
     queryKey: ["events"],
@@ -41,7 +31,7 @@ export default function Events() {
     },
   });
 
-  const onSubmit = async (values: any) => {
+  const handleCreate = async (values: any) => {
     try {
       const { error } = await supabase
         .from("events")
@@ -51,6 +41,7 @@ export default function Events() {
           location: values.location,
           start_time: values.start_time,
           end_time: values.end_time,
+          image_url: values.image_url,
           created_by: user?.id
         });
 
@@ -61,11 +52,63 @@ export default function Events() {
         description: "Your event has been added to the calendar."
       });
 
-      form.reset();
       refetch();
     } catch (error) {
       toast({
         title: "Error creating event",
+        description: "Please try again later.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDelete = async (eventId: string) => {
+    const { error } = await supabase
+      .from("events")
+      .delete()
+      .eq("id", eventId);
+
+    if (error) {
+      toast({
+        title: "Error deleting event",
+        description: "Please try again later.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Event deleted",
+      description: "The event has been removed successfully."
+    });
+    refetch();
+  };
+
+  const handleEdit = async (eventId: string, values: any) => {
+    try {
+      const { error } = await supabase
+        .from("events")
+        .update({
+          title: values.title,
+          description: values.description,
+          location: values.location,
+          start_time: values.start_time,
+          end_time: values.end_time,
+          image_url: values.image_url,
+        })
+        .eq("id", eventId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Event updated",
+        description: "Your event has been updated successfully."
+      });
+
+      refetch();
+    } catch (error) {
+      toast({
+        title: "Error updating event",
         description: "Please try again later.",
         variant: "destructive"
       });
@@ -86,76 +129,7 @@ export default function Events() {
                     <Plus className="mr-2 h-4 w-4" /> Create Event
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Create New Event</DialogTitle>
-                  </DialogHeader>
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="title"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Title</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Event title" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Description</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Event description" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="location"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Location</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Event location" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="start_time"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Start Time</FormLabel>
-                            <FormControl>
-                              <Input type="datetime-local" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="end_time"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>End Time</FormLabel>
-                            <FormControl>
-                              <Input type="datetime-local" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <Button type="submit" className="w-full">Create Event</Button>
-                    </form>
-                  </Form>
-                </DialogContent>
+                <EventForm onSubmit={handleCreate} mode="create" />
               </Dialog>
             </div>
             
@@ -181,21 +155,12 @@ export default function Events() {
                 <CardContent>
                   <div className="space-y-4">
                     {events?.map((event) => (
-                      <div
+                      <EventCard
                         key={event.id}
-                        className="p-4 rounded-lg bg-white border"
-                      >
-                        <h3 className="font-semibold">{event.title}</h3>
-                        <p className="text-sm text-gray-600">
-                          {new Date(event.start_time).toLocaleDateString()} at{" "}
-                          {new Date(event.start_time).toLocaleTimeString()}
-                        </p>
-                        <p className="text-sm text-gray-600">{event.location}</p>
-                        <p className="text-sm mt-2">{event.description}</p>
-                        <p className="text-sm text-gray-500 mt-2">
-                          Posted by {event.profiles?.full_name}
-                        </p>
-                      </div>
+                        event={event}
+                        onDelete={handleDelete}
+                        onEdit={handleEdit}
+                      />
                     ))}
                   </div>
                 </CardContent>
