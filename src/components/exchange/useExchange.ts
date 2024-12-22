@@ -43,6 +43,8 @@ export function useExchange() {
 
   const handleCreate = async (values: any) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+
       const { error } = await supabase
         .from("marketplace_items")
         .insert({
@@ -51,7 +53,7 @@ export function useExchange() {
           price: values.price ? parseFloat(values.price) : null,
           category: values.category,
           image_urls: values.image_urls,
-          created_by: supabase.auth.getUser()?.data.user?.id
+          created_by: user?.id
         });
 
       if (error) throw error;
