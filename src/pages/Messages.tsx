@@ -4,15 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { MessageItem } from "@/components/messages/MessageItem";
+import { MessageInput } from "@/components/messages/MessageInput";
+import { ActiveUsersSidebar } from "@/components/messages/ActiveUsersSidebar";
 
 export default function Messages() {
   const { user } = useAuth();
-  const [newMessage, setNewMessage] = useState("");
   const { toast } = useToast();
 
   const { data: messages, refetch } = useQuery({
@@ -43,7 +42,7 @@ export default function Messages() {
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen for all events (INSERT, UPDATE, DELETE)
+          event: '*',
           schema: 'public',
           table: 'messages',
           filter: 'receiver_id=null'
@@ -59,21 +58,18 @@ export default function Messages() {
     };
   }, [refetch]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
-
+  const handleSendMessage = async (content: string, imageUrl?: string) => {
     try {
       const { error } = await supabase
         .from("messages")
         .insert({
-          content: newMessage.trim(),
+          content,
           sender_id: user?.id,
-          receiver_id: null
+          receiver_id: null,
+          image_url: imageUrl
         });
 
       if (error) throw error;
-      setNewMessage("");
       await refetch();
     } catch (error) {
       toast({
@@ -88,39 +84,34 @@ export default function Messages() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-[#FAF9F6]">
         <AppSidebar />
-        <main className="flex-1 p-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-3xl font-bold text-primary">Community Chat</h1>
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-gray-500" />
-                <span className="text-sm text-gray-500">
-                  {messages?.length || 0} messages
-                </span>
+        <main className="flex-1 flex">
+          <div className="flex-1 p-6">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h1 className="text-3xl font-bold text-primary">Community Chat</h1>
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-gray-500" />
+                  <span className="text-sm text-gray-500">
+                    {messages?.length || 0} messages
+                  </span>
+                </div>
               </div>
-            </div>
 
-            <div className="flex flex-col space-y-4 mb-6 h-[calc(100vh-250px)] overflow-y-auto">
-              {messages?.map((message) => (
-                <MessageItem
-                  key={message.id}
-                  message={message}
-                  currentUserId={user?.id}
-                  onMessageUpdate={refetch}
-                />
-              ))}
-            </div>
+              <div className="flex flex-col space-y-4 mb-6 h-[calc(100vh-250px)] overflow-y-auto">
+                {messages?.map((message) => (
+                  <MessageItem
+                    key={message.id}
+                    message={message}
+                    currentUserId={user?.id}
+                    onMessageUpdate={refetch}
+                  />
+                ))}
+              </div>
 
-            <form onSubmit={handleSendMessage} className="flex gap-2">
-              <Input
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type your message..."
-                className="flex-1"
-              />
-              <Button type="submit">Send</Button>
-            </form>
+              <MessageInput onSendMessage={handleSendMessage} />
+            </div>
           </div>
+          <ActiveUsersSidebar />
         </main>
       </div>
     </SidebarProvider>

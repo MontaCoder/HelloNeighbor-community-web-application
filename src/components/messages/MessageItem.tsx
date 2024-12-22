@@ -92,6 +92,15 @@ export function MessageItem({ message, currentUserId, onMessageUpdate }: Message
               </span>
             </div>
             <p className="text-gray-600">{message.content}</p>
+            {message.image_url && (
+              <div className="mt-2">
+                <img 
+                  src={message.image_url} 
+                  alt="Message attachment" 
+                  className="max-w-full rounded-lg max-h-[300px] object-contain"
+                />
+              </div>
+            )}
             {message.sender_id === currentUserId && (
               <div className="flex gap-2 mt-2 justify-end">
                 <Dialog open={isEditing} onOpenChange={setIsEditing}>
