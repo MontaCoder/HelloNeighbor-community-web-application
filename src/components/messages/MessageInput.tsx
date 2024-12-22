@@ -63,18 +63,17 @@ export function MessageInput({ onSendMessage }: MessageInputProps) {
       {!imageUrl && (
         <ImageUpload
           onImageUploaded={setImageUrl}
-          render={({ openUpload }) => (
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={openUpload}
-              disabled={isUploading}
-            >
-              <ImagePlus className="h-4 w-4" />
-            </Button>
-          )}
-        />
+          existingUrl={imageUrl}
+        >
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            disabled={isUploading}
+          >
+            <ImagePlus className="h-4 w-4" />
+          </Button>
+        </ImageUpload>
       )}
       <Button type="submit" disabled={(!message.trim() && !imageUrl) || isUploading}>
         <Send className="h-4 w-4" />

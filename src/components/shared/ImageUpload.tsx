@@ -9,9 +9,10 @@ import { Loader2, Upload, X } from "lucide-react";
 interface ImageUploadProps {
   onImageUploaded: (url: string) => void;
   existingUrl?: string;
+  children?: React.ReactNode;
 }
 
-export function ImageUpload({ onImageUploaded, existingUrl }: ImageUploadProps) {
+export function ImageUpload({ onImageUploaded, existingUrl, children }: ImageUploadProps) {
   const [preview, setPreview] = useState<string | null>(existingUrl || null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -77,6 +78,15 @@ export function ImageUpload({ onImageUploaded, existingUrl }: ImageUploadProps) 
     setPreview(null);
     onImageUploaded('');
   };
+
+  if (children) {
+    return (
+      <div {...getRootProps()}>
+        <input {...getInputProps()} />
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

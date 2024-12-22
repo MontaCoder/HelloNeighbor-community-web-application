@@ -7,9 +7,9 @@ import { Search } from "lucide-react";
 interface User {
   id: string;
   full_name: string;
-  avatar_url: string;
-  online_at: string;
-  status: 'online' | 'offline' | 'away';
+  avatar_url: string | null;
+  online_at?: string;
+  status?: 'online' | 'offline' | 'away';
 }
 
 export function ActiveUsersSidebar() {
@@ -57,7 +57,15 @@ export function ActiveUsersSidebar() {
       .order('full_name');
     
     if (profiles) {
-      setUsers(profiles as User[]);
+      // Transform profiles to match User interface
+      const transformedUsers: User[] = profiles.map(profile => ({
+        id: profile.id,
+        full_name: profile.full_name || '',
+        avatar_url: profile.avatar_url,
+        status: 'offline',
+        online_at: null
+      }));
+      setUsers(transformedUsers);
     }
   };
 
@@ -118,7 +126,7 @@ export function ActiveUsersSidebar() {
                 </Avatar>
                 <div 
                   className={`absolute bottom-0 right-0 h-2 w-2 rounded-full ${
-                    getStatusColor(user.status)
+                    getStatusColor(user.status || 'offline')
                   } ring-2 ring-white`}
                 />
               </div>
