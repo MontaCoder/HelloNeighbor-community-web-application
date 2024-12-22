@@ -260,6 +260,7 @@ export type Database = {
           longitude: number | null
           neighborhood: string | null
           neighborhood_id: string | null
+          updated_at: string | null
           username: string | null
           visibility_radius: number | null
         }
@@ -273,6 +274,7 @@ export type Database = {
           longitude?: number | null
           neighborhood?: string | null
           neighborhood_id?: string | null
+          updated_at?: string | null
           username?: string | null
           visibility_radius?: number | null
         }
@@ -286,6 +288,7 @@ export type Database = {
           longitude?: number | null
           neighborhood?: string | null
           neighborhood_id?: string | null
+          updated_at?: string | null
           username?: string | null
           visibility_radius?: number | null
         }
