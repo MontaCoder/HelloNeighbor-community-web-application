@@ -70,6 +70,7 @@ export type Database = {
           description: string | null
           end_time: string | null
           id: string
+          image_url: string | null
           latitude: number | null
           location: string | null
           longitude: number | null
@@ -83,6 +84,7 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           id?: string
+          image_url?: string | null
           latitude?: number | null
           location?: string | null
           longitude?: number | null
@@ -96,6 +98,7 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           id?: string
+          image_url?: string | null
           latitude?: number | null
           location?: string | null
           longitude?: number | null
@@ -127,6 +130,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           id: string
+          image_urls: string[] | null
           latitude: number | null
           longitude: number | null
           neighborhood_id: string | null
@@ -140,6 +144,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          image_urls?: string[] | null
           latitude?: number | null
           longitude?: number | null
           neighborhood_id?: string | null
@@ -153,6 +158,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          image_urls?: string[] | null
           latitude?: number | null
           longitude?: number | null
           neighborhood_id?: string | null
@@ -182,6 +188,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          image_url: string | null
           read: boolean | null
           receiver_id: string | null
           sender_id: string | null
@@ -190,6 +197,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          image_url?: string | null
           read?: boolean | null
           receiver_id?: string | null
           sender_id?: string | null
@@ -198,6 +206,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          image_url?: string | null
           read?: boolean | null
           receiver_id?: string | null
           sender_id?: string | null
