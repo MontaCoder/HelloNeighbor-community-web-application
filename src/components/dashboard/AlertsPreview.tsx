@@ -4,22 +4,26 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { AlertCard } from "./AlertCard";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export function AlertsPreview() {
   const { toast } = useToast();
+  const { profile } = useAuth();
 
   const { data: alerts, refetch } = useQuery({
-    queryKey: ["alerts-preview"],
+    queryKey: ["alerts-preview", profile?.city],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("alerts")
         .select("*")
+        .eq('city', profile?.city)
         .order("created_at", { ascending: false })
         .limit(3);
       
       if (error) throw error;
       return data;
     },
+    enabled: !!profile?.city
   });
 
   const handleDelete = async (alertId: string) => {
@@ -53,6 +57,7 @@ export function AlertsPreview() {
           message: values.message,
           type: values.type,
           urgency: values.urgency,
+          city: profile?.city // Ensure city is set on edit
         })
         .eq("id", alertId);
 

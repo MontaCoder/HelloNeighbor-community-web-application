@@ -1,22 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export function useExchange() {
   const { toast } = useToast();
+  const { profile } = useAuth();
 
   const { data: items, refetch } = useQuery({
-    queryKey: ["marketplace"],
+    queryKey: ["marketplace", profile?.city],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("marketplace_items")
         .select("*, profiles(full_name)")
         .eq("status", "available")
+        .eq('city', profile?.city)
         .order("created_at", { ascending: false });
       
       if (error) throw error;
       return data;
     },
+    enabled: !!profile?.city
   });
 
   const handleDelete = async (itemId: string) => {
@@ -53,7 +57,8 @@ export function useExchange() {
           price: values.price ? parseFloat(values.price) : null,
           category: values.category,
           image_urls: values.image_urls,
-          created_by: user?.id
+          created_by: user?.id,
+          city: profile?.city // Set city when creating item
         });
 
       if (error) throw error;
@@ -83,6 +88,7 @@ export function useExchange() {
           price: values.price ? parseFloat(values.price) : null,
           category: values.category,
           image_urls: values.image_urls,
+          city: profile?.city // Ensure city is set on edit
         })
         .eq("id", itemId);
 

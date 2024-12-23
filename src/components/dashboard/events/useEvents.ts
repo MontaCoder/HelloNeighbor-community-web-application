@@ -1,16 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export function useEvents() {
   const { toast } = useToast();
+  const { profile } = useAuth();
 
   const { data: events, refetch } = useQuery({
-    queryKey: ["events-preview"],
+    queryKey: ["events-preview", profile?.city],
     queryFn: async () => {
+      // Only fetch events from the user's city
       const { data, error } = await supabase
         .from("events")
         .select("*")
+        .eq('city', profile?.city)
         .gte("start_time", new Date().toISOString())
         .order("start_time", { ascending: true })
         .limit(3);
@@ -18,6 +22,7 @@ export function useEvents() {
       if (error) throw error;
       return data;
     },
+    enabled: !!profile?.city // Only run query if user has a city set
   });
 
   const handleDelete = async (eventId: string) => {
@@ -53,6 +58,7 @@ export function useEvents() {
           start_time: values.start_time,
           end_time: values.end_time,
           image_url: values.image_url,
+          city: profile?.city // Ensure city is set on edit
         })
         .eq("id", eventId);
 

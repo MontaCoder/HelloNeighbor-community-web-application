@@ -11,11 +11,11 @@ import { MessageInput } from "@/components/messages/MessageInput";
 import { ActiveUsersSidebar } from "@/components/messages/ActiveUsersSidebar";
 
 export default function Messages() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
 
   const { data: messages, refetch } = useQuery({
-    queryKey: ["public-messages"],
+    queryKey: ["public-messages", profile?.city],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("messages")
@@ -27,6 +27,7 @@ export default function Messages() {
             username
           )
         `)
+        .eq('city', profile?.city)
         .is('receiver_id', null)
         .order("created_at", { ascending: true })
         .limit(50);
@@ -34,6 +35,7 @@ export default function Messages() {
       if (error) throw error;
       return data;
     },
+    enabled: !!profile?.city
   });
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export default function Messages() {
           event: '*',
           schema: 'public',
           table: 'messages',
-          filter: 'receiver_id=null'
+          filter: `city=eq.${profile?.city}`
         },
         () => {
           refetch();
@@ -56,7 +58,7 @@ export default function Messages() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [refetch]);
+  }, [refetch, profile?.city]);
 
   const handleSendMessage = async (content: string, imageUrl?: string) => {
     try {
@@ -66,7 +68,8 @@ export default function Messages() {
           content,
           sender_id: user?.id,
           receiver_id: null,
-          image_url: imageUrl
+          image_url: imageUrl,
+          city: profile?.city // Set city when sending message
         });
 
       if (error) throw error;
