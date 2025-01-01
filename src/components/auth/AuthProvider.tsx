@@ -49,14 +49,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle();
 
-    if (!error && data) {
+      if (error) {
+        console.error('Error fetching profile:', error);
+        throw error;
+      }
+
       setProfile(data);
+    } catch (error) {
+      console.error('Error in fetchProfile:', error);
+      // Even if there's an error, we should still set loading to false
+      // to prevent the app from being stuck in a loading state
     }
     setLoading(false);
   };
