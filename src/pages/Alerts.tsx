@@ -14,7 +14,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function Alerts() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const form = useForm({
     defaultValues: {
@@ -47,7 +47,8 @@ export default function Alerts() {
           message: values.message,
           type: values.type,
           urgency: values.urgency,
-          created_by: user?.id
+          created_by: user?.id,
+          city: profile?.city // Add the city field from the user's profile
         });
 
       if (error) throw error;
@@ -191,4 +192,4 @@ export default function Alerts() {
       </div>
     </SidebarProvider>
   );
-}
+};

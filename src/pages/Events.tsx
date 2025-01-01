@@ -15,7 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export default function Events() {
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
 
   const { data: events, refetch } = useQuery({
@@ -42,7 +42,8 @@ export default function Events() {
           start_time: values.start_time,
           end_time: values.end_time,
           image_url: values.image_url,
-          created_by: user?.id
+          created_by: user?.id,
+          city: profile?.city // Add the city field from the user's profile
         });
 
       if (error) throw error;
