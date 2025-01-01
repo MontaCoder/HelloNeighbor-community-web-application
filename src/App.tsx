@@ -38,12 +38,16 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Public routes - accessible without authentication */}
-      <Route path="/" element={<Index />} />
       <Route path="/auth" element={<AuthPage />} />
       
       {/* Location setup route - requires auth but no location */}
       <Route path="/location-setup" element={
         user ? <LocationSetup /> : <Navigate to="/auth" />
+      } />
+      
+      {/* Root route - redirect based on auth status */}
+      <Route path="/" element={
+        user ? <Navigate to="/dashboard" /> : <Index />
       } />
       
       {/* Protected routes - require authentication and location */}
