@@ -118,8 +118,8 @@ export function EventForm({ onSuccess }: EventFormProps) {
           <div className="space-y-2">
             <Label>Event Image</Label>
             <ImageUpload
-              value={form.watch("image_url")}
-              onChange={(url) => form.setValue("image_url", url)}
+              existingUrl={form.watch("image_url")}
+              onImageUploaded={(url) => form.setValue("image_url", url)}
             />
           </div>
 
