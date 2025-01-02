@@ -5,20 +5,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { Shield } from "lucide-react";
+import { Shield, Loader } from "lucide-react";
 import NeighborhoodList from "@/components/admin/NeighborhoodList";
 import NeighborhoodForm from "@/components/admin/NeighborhoodForm";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function Admin() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
   // Check if user is admin
-  const { data: isAdmin, isLoading } = useQuery({
+  const { data: isAdmin, isLoading, isError } = useQuery({
     queryKey: ["is-admin", user?.id],
     queryFn: async () => {
+      if (!user?.id) return false;
       const { data, error } = await supabase
-        .rpc('is_admin', { user_id: user?.id });
+        .rpc('is_admin', { user_id: user.id });
       
       if (error) throw error;
       return data;
@@ -33,7 +35,30 @@ export default function Admin() {
     }
   }, [isAdmin, isLoading, navigate]);
 
-  if (isLoading || !isAdmin) return null;
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-6 flex items-center justify-center">
+        <Loader className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="container mx-auto p-6">
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            There was an error checking admin permissions. Please try again later.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return null;
+  }
 
   return (
     <div className="container mx-auto p-6">

@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./components/auth/AuthProvider";
 import AuthPage from "./components/auth/AuthPage";
 import LocationSetup from "./pages/LocationSetup";
@@ -19,13 +19,24 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading, profile } = useAuth();
+  const location = useLocation();
   
-  if (loading) return null;
-  if (!user) return <Navigate to="/auth" />;
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+  
+  if (!user) {
+    return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
+  
+  // Skip location check for admin route
+  if (location.pathname === '/admin') {
+    return <>{children}</>;
+  }
   
   // Redirect to location setup if user has no location set
   if (!profile?.latitude || !profile?.longitude) {
-    return <Navigate to="/location-setup" />;
+    return <Navigate to="/location-setup" state={{ from: location }} replace />;
   }
   
   return <>{children}</>;
@@ -34,7 +45,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AppRoutes() {
   const { user, loading } = useAuth();
 
-  if (loading) return null;
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <Routes>
