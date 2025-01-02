@@ -11,82 +11,80 @@ import { MapPin, Navigation, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { LocationMap } from "@/components/location/LocationMap";
-
-const popularCities = [
-  { id: "tunis", name: "Tunis", lat: 36.8065, lon: 10.1815 },
-  { id: "sfax", name: "Sfax", lat: 34.7398, lon: 10.7600 },
-  { id: "sousse", name: "Sousse", lat: 35.8333, lon: 10.6333 },
-  { id: "kairouan", name: "Kairouan", lat: 35.6781, lon: 10.0964 },
-];
+import { useQuery } from "@tanstack/react-query";
 
 export default function LocationSetup() {
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedCity, setSelectedCity] = useState("");
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState("");
   const [manualLocation, setManualLocation] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const updateUserLocation = async (latitude: number, longitude: number) => {
+  // Check if user is admin
+  const { data: isAdmin } = useQuery({
+    queryKey: ["is-admin", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .rpc('is_admin', { user_id: user?.id });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user
+  });
+
+  // Fetch neighborhoods
+  const { data: neighborhoods } = useQuery({
+    queryKey: ["neighborhoods"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('neighborhoods')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // If user is admin, skip location setup
+  if (isAdmin) {
+    navigate("/admin");
+    return null;
+  }
+
+  const updateUserLocation = async (neighborhoodId: string) => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ latitude, longitude })
+        .update({ 
+          neighborhood_id: neighborhoodId,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', user?.id);
 
       if (error) throw error;
 
       toast({
         title: "Location updated",
-        description: "Your location has been set successfully."
+        description: "Your neighborhood has been set successfully."
       });
-      
+
       navigate("/dashboard");
     } catch (error) {
       console.error('Error updating location:', error);
       toast({
         title: "Error updating location",
-        description: "Please try again or select a city from the list.",
+        description: "Please try again later.",
         variant: "destructive"
       });
     }
   };
 
-  const detectLocation = () => {
-    setIsLoading(true);
-    if (!navigator.geolocation) {
-      toast({
-        title: "Geolocation not supported",
-        description: "Please select a city from the list or enter your location manually.",
-        variant: "destructive"
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        updateUserLocation(position.coords.latitude, position.coords.longitude);
-        setIsLoading(false);
-      },
-      (error) => {
-        console.error('Geolocation error:', error);
-        toast({
-          title: "Location detection failed",
-          description: "Please enable location access or select a city from the list.",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-      },
-      { enableHighAccuracy: true }
-    );
-  };
-
-  const handleCitySelect = (cityId: string) => {
-    const city = popularCities.find(c => c.id === cityId);
-    if (city) {
-      updateUserLocation(city.lat, city.lon);
-    }
+  const handleNeighborhoodSelect = (neighborhoodId: string) => {
+    setSelectedNeighborhood(neighborhoodId);
+    updateUserLocation(neighborhoodId);
   };
 
   return (
@@ -95,69 +93,23 @@ export default function LocationSetup() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl text-primary">Set Your Location</CardTitle>
           <CardDescription>
-            Choose how you'd like to set your location to see relevant content in your area
+            Choose your neighborhood to see relevant content in your area
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Button 
-            onClick={detectLocation} 
-            disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2"
-          >
-            <Navigation className="h-4 w-4" />
-            {isLoading ? "Detecting location..." : "Use Current Location"}
-          </Button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or choose a city
-              </span>
-            </div>
-          </div>
-
           <div className="space-y-4">
-            <Select onValueChange={handleCitySelect}>
+            <Select onValueChange={handleNeighborhoodSelect}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a popular city" />
+                <SelectValue placeholder="Select your neighborhood" />
               </SelectTrigger>
               <SelectContent>
-                {popularCities.map((city) => (
-                  <SelectItem key={city.id} value={city.id}>
-                    {city.name}
+                {neighborhoods?.map((neighborhood) => (
+                  <SelectItem key={neighborhood.id} value={neighborhood.id}>
+                    {neighborhood.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-
-            <Separator className="my-4" />
-
-            <div className="space-y-2">
-              <Label htmlFor="manual-location">Enter location manually</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="manual-location"
-                  placeholder="Enter city or address"
-                  value={manualLocation}
-                  onChange={(e) => setManualLocation(e.target.value)}
-                />
-                <Button 
-                  variant="secondary"
-                  onClick={() => {
-                    // Here you would typically implement geocoding
-                    toast({
-                      title: "Manual location",
-                      description: "Geocoding service will be implemented soon.",
-                    });
-                  }}
-                >
-                  <Search className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
 
             <div className="mt-6">
               <LocationMap />

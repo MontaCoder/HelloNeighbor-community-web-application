@@ -11,33 +11,33 @@ export type Database = {
     Tables: {
       alerts: {
         Row: {
-          city: string
           created_at: string
           created_by: string | null
           id: string
           message: string
+          neighborhood_id: string | null
           title: string
           type: string
           updated_at: string
           urgency: string
         }
         Insert: {
-          city: string
           created_at?: string
           created_by?: string | null
           id?: string
           message: string
+          neighborhood_id?: string | null
           title: string
           type: string
           updated_at?: string
           urgency: string
         }
         Update: {
-          city?: string
           created_at?: string
           created_by?: string | null
           id?: string
           message?: string
+          neighborhood_id?: string | null
           title?: string
           type?: string
           updated_at?: string
@@ -51,11 +51,17 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "alerts_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
+            referencedColumns: ["id"]
+          },
         ]
       }
       events: {
         Row: {
-          city: string
           created_at: string
           created_by: string | null
           description: string | null
@@ -63,12 +69,12 @@ export type Database = {
           id: string
           image_url: string | null
           location: string | null
+          neighborhood_id: string | null
           start_time: string
           title: string
           updated_at: string
         }
         Insert: {
-          city: string
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -76,12 +82,12 @@ export type Database = {
           id?: string
           image_url?: string | null
           location?: string | null
+          neighborhood_id?: string | null
           start_time: string
           title: string
           updated_at?: string
         }
         Update: {
-          city?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -89,6 +95,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           location?: string | null
+          neighborhood_id?: string | null
           start_time?: string
           title?: string
           updated_at?: string
@@ -101,17 +108,24 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "events_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
+            referencedColumns: ["id"]
+          },
         ]
       }
       marketplace_items: {
         Row: {
           category: string | null
-          city: string
           created_at: string
           created_by: string | null
           description: string | null
           id: string
           image_urls: string[] | null
+          neighborhood_id: string | null
           price: number | null
           status: string | null
           title: string
@@ -119,12 +133,12 @@ export type Database = {
         }
         Insert: {
           category?: string | null
-          city: string
           created_at?: string
           created_by?: string | null
           description?: string | null
           id?: string
           image_urls?: string[] | null
+          neighborhood_id?: string | null
           price?: number | null
           status?: string | null
           title: string
@@ -132,12 +146,12 @@ export type Database = {
         }
         Update: {
           category?: string | null
-          city?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
           id?: string
           image_urls?: string[] | null
+          neighborhood_id?: string | null
           price?: number | null
           status?: string | null
           title?: string
@@ -151,40 +165,54 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "marketplace_items_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
+            referencedColumns: ["id"]
+          },
         ]
       }
       messages: {
         Row: {
-          city: string | null
           content: string
           created_at: string
           id: string
           image_url: string | null
+          neighborhood_id: string | null
           receiver_id: string | null
           sender_id: string | null
           updated_at: string
         }
         Insert: {
-          city?: string | null
           content: string
           created_at?: string
           id?: string
           image_url?: string | null
+          neighborhood_id?: string | null
           receiver_id?: string | null
           sender_id?: string | null
           updated_at?: string
         }
         Update: {
-          city?: string | null
           content?: string
           created_at?: string
           id?: string
           image_url?: string | null
+          neighborhood_id?: string | null
           receiver_id?: string | null
           sender_id?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "messages_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "messages_receiver_id_fkey"
             columns: ["receiver_id"]
@@ -201,6 +229,47 @@ export type Database = {
           },
         ]
       }
+      neighborhoods: {
+        Row: {
+          boundaries: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          boundaries: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          boundaries?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "neighborhoods_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -211,6 +280,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           neighborhood: string | null
+          neighborhood_id: string | null
           updated_at: string
           username: string | null
         }
@@ -223,6 +293,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           neighborhood?: string | null
+          neighborhood_id?: string | null
           updated_at?: string
           username?: string | null
         }
@@ -235,8 +306,38 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           neighborhood?: string | null
+          neighborhood_id?: string | null
           updated_at?: string
           username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"] | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -252,9 +353,15 @@ export type Database = {
         }
         Returns: string
       }
+      is_admin: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never

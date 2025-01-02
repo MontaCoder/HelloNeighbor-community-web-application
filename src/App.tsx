@@ -13,6 +13,7 @@ import Exchange from "./pages/Exchange";
 import Messages from "./pages/Messages";
 import Neighbors from "./pages/Neighbors";
 import Settings from "./pages/Settings";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,7 @@ function AppRoutes() {
       <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
       <Route path="/neighbors" element={<ProtectedRoute><Neighbors /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+      <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
     </Routes>
   );
 }
