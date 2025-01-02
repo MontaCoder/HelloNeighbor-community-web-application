@@ -1,21 +1,20 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, Edit, Loader } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function NeighborhoodList() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const { data: neighborhoods, isLoading, isError, error, refetch } = useQuery({
+  const { data: neighborhoods, isLoading, error } = useQuery({
     queryKey: ["neighborhoods"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('neighborhoods')
-        .select('*')
-        .order('name');
+        .from("neighborhoods")
+        .select("*");
       
       if (error) throw error;
       return data;
@@ -24,6 +23,24 @@ export default function NeighborhoodList() {
 
   const handleDelete = async (id: string) => {
     try {
+      // First check if there are any profiles in this neighborhood
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('neighborhood_id', id);
+
+      if (profilesError) throw profilesError;
+
+      if (profiles && profiles.length > 0) {
+        toast({
+          title: "Cannot delete neighborhood",
+          description: "There are still users living in this neighborhood. Please remove or reassign them first.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // If no profiles found, proceed with deletion
       const { error } = await supabase
         .from('neighborhoods')
         .delete()
@@ -32,16 +49,16 @@ export default function NeighborhoodList() {
       if (error) throw error;
 
       toast({
-        title: "Neighborhood deleted",
-        description: "The neighborhood has been removed successfully."
+        title: "Success",
+        description: "Neighborhood deleted successfully"
       });
 
-      refetch();
+      queryClient.invalidateQueries({ queryKey: ["neighborhoods"] });
     } catch (error) {
       console.error('Error deleting neighborhood:', error);
       toast({
         title: "Error",
-        description: "Could not delete the neighborhood. Please try again.",
+        description: "Could not delete neighborhood. Please try again.",
         variant: "destructive"
       });
     }
@@ -50,20 +67,26 @@ export default function NeighborhoodList() {
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="flex items-center justify-center p-6">
-          <Loader className="h-6 w-6 animate-spin text-primary" />
+        <CardHeader>
+          <CardTitle>Neighborhoods</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>Loading neighborhoods...</p>
         </CardContent>
       </Card>
     );
   }
 
-  if (isError) {
+  if (error) {
     return (
-      <Alert variant="destructive">
-        <AlertDescription>
-          Error loading neighborhoods: {(error as Error).message}
-        </AlertDescription>
-      </Alert>
+      <Card>
+        <CardHeader>
+          <CardTitle>Neighborhoods</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-red-500">Error loading neighborhoods</p>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -73,43 +96,31 @@ export default function NeighborhoodList() {
         <CardTitle>Neighborhoods</CardTitle>
       </CardHeader>
       <CardContent>
-        {neighborhoods && neighborhoods.length > 0 ? (
-          <div className="space-y-4">
-            {neighborhoods.map((neighborhood) => (
-              <div
-                key={neighborhood.id}
-                className="flex items-center justify-between p-4 border rounded-lg"
-              >
-                <div>
-                  <h3 className="font-medium">{neighborhood.name}</h3>
-                  <p className="text-sm text-gray-500">{neighborhood.description}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => {
-                      toast({
-                        description: "Edit functionality coming soon"
-                      });
-                    }}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => handleDelete(neighborhood.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+        <div className="space-y-4">
+          {neighborhoods?.map((neighborhood) => (
+            <div
+              key={neighborhood.id}
+              className="flex items-center justify-between p-4 border rounded-lg"
+            >
+              <div>
+                <h3 className="font-medium">{neighborhood.name}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {neighborhood.description}
+                </p>
               </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-center text-muted-foreground">No neighborhoods found</p>
-        )}
+              <Button
+                variant="destructive"
+                size="icon"
+                onClick={() => handleDelete(neighborhood.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          {neighborhoods?.length === 0 && (
+            <p className="text-muted-foreground">No neighborhoods found</p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
