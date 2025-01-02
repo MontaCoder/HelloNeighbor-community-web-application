@@ -1,22 +1,15 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { MapPin, Navigation, Search } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { LocationMap } from "@/components/location/LocationMap";
 import { useQuery } from "@tanstack/react-query";
 
 export default function LocationSetup() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedNeighborhood, setSelectedNeighborhood] = useState("");
-  const [manualLocation, setManualLocation] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -48,11 +41,12 @@ export default function LocationSetup() {
     }
   });
 
-  // If user is admin, skip location setup
-  if (isAdmin) {
-    navigate("/admin");
-    return null;
-  }
+  // Redirect admin users to admin panel
+  useEffect(() => {
+    if (isAdmin) {
+      navigate("/admin");
+    }
+  }, [isAdmin, navigate]);
 
   const updateUserLocation = async (neighborhoodId: string) => {
     try {
@@ -82,23 +76,23 @@ export default function LocationSetup() {
     }
   };
 
-  const handleNeighborhoodSelect = (neighborhoodId: string) => {
-    setSelectedNeighborhood(neighborhoodId);
-    updateUserLocation(neighborhoodId);
-  };
+  if (isAdmin) return null;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#FAF9F6] p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl text-primary">Set Your Location</CardTitle>
+          <CardTitle className="flex items-center justify-center gap-2 text-2xl text-primary">
+            <MapPin className="h-6 w-6" />
+            Set Your Location
+          </CardTitle>
           <CardDescription>
             Choose your neighborhood to see relevant content in your area
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
-            <Select onValueChange={handleNeighborhoodSelect}>
+            <Select onValueChange={updateUserLocation}>
               <SelectTrigger>
                 <SelectValue placeholder="Select your neighborhood" />
               </SelectTrigger>
