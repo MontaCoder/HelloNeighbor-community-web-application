@@ -5,14 +5,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { Shield, Loader } from "lucide-react";
+import { Shield, Loader, LogOut } from "lucide-react";
 import NeighborhoodList from "@/components/admin/NeighborhoodList";
 import NeighborhoodForm from "@/components/admin/NeighborhoodForm";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Admin() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   // Check if user is admin
   const { data: isAdmin, isLoading, isError } = useQuery({
@@ -34,6 +37,23 @@ export default function Admin() {
       navigate("/dashboard");
     }
   }, [isAdmin, isLoading, navigate]);
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account"
+      });
+      navigate("/auth");
+    } catch (error) {
+      toast({
+        title: "Error logging out",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -64,9 +84,15 @@ export default function Admin() {
     <div className="container mx-auto p-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Shield className="h-6 w-6 text-primary" />
-            <CardTitle>Admin Panel</CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Shield className="h-6 w-6 text-primary" />
+              <CardTitle>Admin Panel</CardTitle>
+            </div>
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
           </div>
           <CardDescription>
             Manage neighborhoods and system settings
