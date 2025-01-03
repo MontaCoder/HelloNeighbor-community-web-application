@@ -16,6 +16,8 @@ import OSM from 'ol/source/OSM';
 import Draw from 'ol/interaction/Draw';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { Polygon } from 'ol/geom';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
 
 type NeighborhoodFormData = {
   name: string;
@@ -24,6 +26,7 @@ type NeighborhoodFormData = {
 
 export default function NeighborhoodForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [drawingInstructions, setDrawingInstructions] = useState(true);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const mapRef = useRef<HTMLDivElement>(null);
@@ -50,8 +53,8 @@ export default function NeighborhoodForm() {
         vectorLayer
       ],
       view: new View({
-        center: fromLonLat([-98, 39]), // Center on US
-        zoom: 4
+        center: fromLonLat([10.2819465, 36.7590275]), // Center on Tunisia
+        zoom: 12
       })
     });
 
@@ -60,10 +63,13 @@ export default function NeighborhoodForm() {
       type: 'Polygon'
     });
 
-    drawInteraction.on('drawend', (event) => {
+    drawInteraction.on('drawstart', () => {
       // Clear previous drawings
       vectorSourceRef.current.clear();
-      
+      setDrawingInstructions(false);
+    });
+
+    drawInteraction.on('drawend', (event) => {
       // Get the drawn polygon
       const polygon = event.feature.getGeometry() as Polygon;
       
@@ -123,6 +129,7 @@ export default function NeighborhoodForm() {
       reset();
       vectorSourceRef.current.clear();
       setBoundaries(null);
+      setDrawingInstructions(true);
       
     } catch (error) {
       console.error('Error creating neighborhood:', error);
@@ -160,12 +167,31 @@ export default function NeighborhoodForm() {
             />
           </div>
 
+          {drawingInstructions && (
+            <Alert>
+              <InfoIcon className="h-4 w-4" />
+              <AlertDescription>
+                Click on the map to start drawing the neighborhood boundaries. 
+                Click to add points and double-click to complete the polygon.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="h-[400px] w-full border rounded-md overflow-hidden">
             <div ref={mapRef} className="w-full h-full" />
           </div>
-          <p className="text-sm text-muted-foreground">
-            Draw the neighborhood boundaries on the map
-          </p>
+          
+          {!boundaries && !drawingInstructions && (
+            <p className="text-sm text-muted-foreground">
+              Continue clicking to draw the neighborhood boundaries. Double-click to finish.
+            </p>
+          )}
+
+          {boundaries && (
+            <p className="text-sm text-muted-foreground">
+              Boundaries drawn successfully. Click the map again to redraw if needed.
+            </p>
+          )}
 
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Creating..." : "Create Neighborhood"}
