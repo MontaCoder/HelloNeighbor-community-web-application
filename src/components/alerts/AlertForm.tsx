@@ -35,7 +35,7 @@ export function AlertForm({ onSuccess }: AlertFormProps) {
           type: values.type,
           urgency: values.urgency,
           created_by: user?.id,
-          city: profile?.city
+          neighborhood_id: profile?.neighborhood_id
         });
 
       if (error) throw error;
