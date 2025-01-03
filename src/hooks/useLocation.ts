@@ -12,10 +12,17 @@ export const useLocation = () => {
 
   const findNeighborhood = async (latitude: number, longitude: number) => {
     try {
+      console.log('Checking neighborhood for coordinates:', { latitude, longitude });
+      
       const { data: neighborhood, error } = await supabase
         .rpc('find_neighborhood', { lat: latitude, lon: longitude });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error in findNeighborhood:', error);
+        throw error;
+      }
+      
+      console.log('Found neighborhood:', neighborhood);
       return neighborhood;
     } catch (error) {
       console.error('Error finding neighborhood:', error);
@@ -25,10 +32,14 @@ export const useLocation = () => {
 
   const updateUserLocation = useCallback(async (latitude: number, longitude: number) => {
     try {
+      console.log('Updating user location:', { latitude, longitude });
+      
       // First find the neighborhood for this location
       const neighborhood_id = await findNeighborhood(latitude, longitude);
+      console.log('Resolved neighborhood_id:', neighborhood_id);
 
       if (!neighborhood_id) {
+        console.log('No neighborhood found for location');
         toast({
           title: "Location not in service area",
           description: "Sorry, we don't currently serve your area.",
@@ -47,8 +58,13 @@ export const useLocation = () => {
         })
         .eq('id', user?.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating profile:', error);
+        throw error;
+      }
 
+      console.log('Successfully updated user location with neighborhood:', neighborhood_id);
+      
       toast({
         title: "Location verified",
         description: "Welcome to your neighborhood!"
@@ -69,9 +85,11 @@ export const useLocation = () => {
 
   const detectLocation = useCallback(async () => {
     setLoading(true);
+    console.log('Starting location detection...');
 
     if (!navigator.geolocation) {
       setLoading(false);
+      console.error('Geolocation not supported by browser');
       toast({
         title: "Geolocation not supported",
         description: "Your browser doesn't support location detection.",
@@ -91,6 +109,11 @@ export const useLocation = () => {
             maximumAge: 0
           }
         );
+      });
+
+      console.log('Got position:', {
+        lat: position.coords.latitude,
+        lon: position.coords.longitude
       });
 
       const success = await updateUserLocation(
