@@ -15,7 +15,7 @@ export default function Messages() {
   const { toast } = useToast();
 
   const { data: messages, refetch } = useQuery({
-    queryKey: ["public-messages", profile?.city],
+    queryKey: ["public-messages", profile?.neighborhood_id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("messages")
@@ -27,7 +27,7 @@ export default function Messages() {
             username
           )
         `)
-        .eq('city', profile?.city)
+        .eq('neighborhood_id', profile?.neighborhood_id)
         .is('receiver_id', null)
         .order("created_at", { ascending: true })
         .limit(50);
@@ -35,7 +35,7 @@ export default function Messages() {
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.city
+    enabled: !!profile?.neighborhood_id
   });
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function Messages() {
           event: '*',
           schema: 'public',
           table: 'messages',
-          filter: `city=eq.${profile?.city}`
+          filter: `neighborhood_id=eq.${profile?.neighborhood_id}`
         },
         () => {
           refetch();
@@ -58,7 +58,7 @@ export default function Messages() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [refetch, profile?.city]);
+  }, [refetch, profile?.neighborhood_id]);
 
   const handleSendMessage = async (content: string, imageUrl?: string) => {
     try {
@@ -69,7 +69,7 @@ export default function Messages() {
           sender_id: user?.id,
           receiver_id: null,
           image_url: imageUrl,
-          city: profile?.city // Set city when sending message
+          neighborhood_id: profile?.neighborhood_id
         });
 
       if (error) throw error;
