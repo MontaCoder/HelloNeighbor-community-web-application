@@ -12,17 +12,18 @@ export function AlertList() {
   const { toast } = useToast();
 
   const { data: alerts, refetch } = useQuery({
-    queryKey: ["alerts", profile?.city],
+    queryKey: ["alerts", profile?.neighborhood_id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("alerts")
-        .select("*")
+        .select("*, profiles:created_by(full_name), neighborhoods:neighborhood_id(name)")
+        .eq('neighborhood_id', profile?.neighborhood_id)
         .order("created_at", { ascending: false });
       
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.city
+    enabled: !!profile?.neighborhood_id
   });
 
   const handleDelete = async (id: string) => {
@@ -85,12 +86,21 @@ export function AlertList() {
           </CardHeader>
           <CardContent>
             <p className="text-gray-600">{alert.message}</p>
-            <p className="text-sm text-gray-400 mt-2">
-              Posted on {new Date(alert.created_at).toLocaleDateString()}
-            </p>
+            <div className="flex justify-between items-center mt-2 text-sm text-gray-400">
+              <span>Posted by {alert.profiles?.full_name || 'Unknown'}</span>
+              <span>in {alert.neighborhoods?.name || 'Unknown Neighborhood'}</span>
+              <span>{new Date(alert.created_at).toLocaleDateString()}</span>
+            </div>
           </CardContent>
         </Card>
       ))}
+      {!alerts?.length && (
+        <Card>
+          <CardContent className="p-6 text-center text-gray-500">
+            No alerts found for your neighborhood
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

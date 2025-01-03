@@ -13,47 +13,66 @@ import { supabase } from "@/integrations/supabase/client";
 const Index = () => {
   const { user, loading, profile } = useAuth();
 
+  const { data: neighborhood } = useQuery({
+    queryKey: ['neighborhood', profile?.neighborhood_id],
+    queryFn: async () => {
+      if (!profile?.neighborhood_id) return null;
+      const { data, error } = await supabase
+        .from('neighborhoods')
+        .select('name')
+        .eq('id', profile.neighborhood_id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!profile?.neighborhood_id
+  });
+
   const { data: nearbyEvents } = useQuery({
-    queryKey: ["nearby-events"],
+    queryKey: ["nearby-events", profile?.neighborhood_id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("events")
         .select("*")
+        .eq('neighborhood_id', profile?.neighborhood_id)
         .order("start_time", { ascending: true });
       
       if (error) throw error;
       return data;
     },
-    enabled: !!user
+    enabled: !!profile?.neighborhood_id
   });
 
   const { data: nearbyAlerts } = useQuery({
-    queryKey: ["nearby-alerts"],
+    queryKey: ["nearby-alerts", profile?.neighborhood_id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("alerts")
         .select("*")
+        .eq('neighborhood_id', profile?.neighborhood_id)
         .order("created_at", { ascending: false });
       
       if (error) throw error;
       return data;
     },
-    enabled: !!user
+    enabled: !!profile?.neighborhood_id
   });
 
   const { data: nearbyItems } = useQuery({
-    queryKey: ["nearby-items"],
+    queryKey: ["nearby-items", profile?.neighborhood_id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("marketplace_items")
         .select("*")
+        .eq('neighborhood_id', profile?.neighborhood_id)
         .eq("status", "available")
         .order("created_at", { ascending: false });
       
       if (error) throw error;
       return data;
     },
-    enabled: !!user
+    enabled: !!profile?.neighborhood_id
   });
 
   if (loading) return null;
@@ -70,7 +89,11 @@ const Index = () => {
                 <h1 className="text-4xl font-bold text-primary mb-2">
                   Welcome, {profile?.full_name || user?.email || "Neighbor"}
                 </h1>
-                <p className="text-lg text-gray-600 mb-4">Stay connected with your community</p>
+                {neighborhood && (
+                  <p className="text-lg text-gray-600 mb-4">
+                    Your Neighborhood: {neighborhood.name}
+                  </p>
+                )}
                 <LocationDetector />
               </header>
               

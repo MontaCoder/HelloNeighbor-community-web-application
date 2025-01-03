@@ -7,13 +7,29 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Settings() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || "",
-    neighborhood: profile?.neighborhood || "",
+  });
+
+  const { data: neighborhood } = useQuery({
+    queryKey: ['neighborhood', profile?.neighborhood_id],
+    queryFn: async () => {
+      if (!profile?.neighborhood_id) return null;
+      const { data, error } = await supabase
+        .from('neighborhoods')
+        .select('name')
+        .eq('id', profile.neighborhood_id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!profile?.neighborhood_id
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,13 +85,22 @@ export default function Settings() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">
+                      Email
+                    </label>
+                    <Input
+                      value={user?.email || ""}
+                      disabled
+                      className="bg-gray-50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
                       Neighborhood
                     </label>
                     <Input
-                      value={formData.neighborhood}
-                      onChange={(e) =>
-                        setFormData({ ...formData, neighborhood: e.target.value })
-                      }
+                      value={neighborhood?.name || "Not set"}
+                      disabled
+                      className="bg-gray-50"
                     />
                   </div>
                   <Button type="submit">Save Changes</Button>

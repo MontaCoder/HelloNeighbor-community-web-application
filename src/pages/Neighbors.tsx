@@ -13,7 +13,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function Neighbors() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [selectedNeighbor, setSelectedNeighbor] = useState<any>(null);
   const [messageContent, setMessageContent] = useState("");
@@ -21,16 +21,19 @@ export default function Neighbors() {
   const queryClient = useQueryClient();
 
   const { data: neighbors, isLoading } = useQuery({
-    queryKey: ["neighbors"],
+    queryKey: ["neighbors", profile?.neighborhood_id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
+        .eq('neighborhood_id', profile?.neighborhood_id)
+        .neq('id', user?.id)
         .order("created_at", { ascending: false });
       
       if (error) throw error;
       return data;
     },
+    enabled: !!profile?.neighborhood_id
   });
 
   const { data: messages, refetch: refetchMessages } = useQuery({
@@ -86,7 +89,8 @@ export default function Neighbors() {
         .insert({
           content: messageContent.trim(),
           sender_id: user?.id,
-          receiver_id: selectedNeighbor.id
+          receiver_id: selectedNeighbor.id,
+          neighborhood_id: profile?.neighborhood_id
         });
 
       if (error) throw error;
@@ -117,7 +121,7 @@ export default function Neighbors() {
               {isLoading ? (
                 <p>Loading neighbors...</p>
               ) : neighbors?.length === 0 ? (
-                <p>No neighbors found</p>
+                <p>No neighbors found in your neighborhood</p>
               ) : (
                 neighbors?.map((neighbor) => (
                   <Card key={neighbor.id} className="hover:shadow-lg transition-shadow">
@@ -133,9 +137,6 @@ export default function Neighbors() {
                           <h3 className="font-semibold text-lg">
                             {neighbor.full_name || neighbor.username}
                           </h3>
-                          <p className="text-gray-600 text-sm">
-                            {neighbor.neighborhood || "Neighborhood not specified"}
-                          </p>
                         </div>
                       </div>
                       {user?.id !== neighbor.id && (
