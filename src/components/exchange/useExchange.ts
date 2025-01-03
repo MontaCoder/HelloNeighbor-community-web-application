@@ -8,19 +8,19 @@ export function useExchange() {
   const { profile } = useAuth();
 
   const { data: items, refetch } = useQuery({
-    queryKey: ["marketplace", profile?.city],
+    queryKey: ["marketplace", profile?.neighborhood_id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("marketplace_items")
         .select("*, profiles(full_name)")
         .eq("status", "available")
-        .eq('city', profile?.city)
+        .eq('neighborhood_id', profile?.neighborhood_id)
         .order("created_at", { ascending: false });
       
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.city
+    enabled: !!profile?.neighborhood_id
   });
 
   const handleDelete = async (itemId: string) => {
@@ -58,7 +58,7 @@ export function useExchange() {
           category: values.category,
           image_urls: values.image_urls,
           created_by: user?.id,
-          city: profile?.city // Set city when creating item
+          neighborhood_id: profile?.neighborhood_id
         });
 
       if (error) throw error;
@@ -88,7 +88,7 @@ export function useExchange() {
           price: values.price ? parseFloat(values.price) : null,
           category: values.category,
           image_urls: values.image_urls,
-          city: profile?.city // Ensure city is set on edit
+          neighborhood_id: profile?.neighborhood_id
         })
         .eq("id", itemId);
 
