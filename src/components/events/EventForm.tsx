@@ -39,7 +39,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
           end_time: values.end_time,
           image_url: values.image_url,
           created_by: user?.id,
-          city: profile?.city
+          neighborhood_id: profile?.neighborhood_id
         });
 
       if (error) throw error;
