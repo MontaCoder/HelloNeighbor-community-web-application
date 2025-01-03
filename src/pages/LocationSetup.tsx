@@ -1,18 +1,21 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin } from "lucide-react";
+import { MapPin, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { LocationMap } from "@/components/location/LocationMap";
 import { useQuery } from "@tanstack/react-query";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useLocation } from "@/hooks/useLocation";
 
 export default function LocationSetup() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { detectLocation, loading: locationLoading } = useLocation();
+  const [noAccess, setNoAccess] = useState(false);
 
   // Check if user is admin
   const { data: isAdmin } = useQuery({
@@ -48,33 +51,24 @@ export default function LocationSetup() {
     }
   }, [isAdmin, navigate]);
 
-  const updateUserLocation = async (neighborhoodId: string) => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ 
-          neighborhood_id: neighborhoodId,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user?.id);
+  // Auto-detect location on component mount
+  useEffect(() => {
+    const checkLocation = async () => {
+      try {
+        const success = await detectLocation();
+        if (!success) {
+          setNoAccess(true);
+        }
+      } catch (error) {
+        console.error('Error detecting location:', error);
+        setNoAccess(true);
+      }
+    };
 
-      if (error) throw error;
-
-      toast({
-        title: "Location updated",
-        description: "Your neighborhood has been set successfully."
-      });
-
-      navigate("/dashboard");
-    } catch (error) {
-      console.error('Error updating location:', error);
-      toast({
-        title: "Error updating location",
-        description: "Please try again later.",
-        variant: "destructive"
-      });
+    if (!isAdmin && user) {
+      checkLocation();
     }
-  };
+  }, [detectLocation, isAdmin, user]);
 
   if (isAdmin) return null;
 
@@ -84,31 +78,36 @@ export default function LocationSetup() {
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center gap-2 text-2xl text-primary">
             <MapPin className="h-6 w-6" />
-            Set Your Location
+            Location Verification
           </CardTitle>
           <CardDescription>
-            Choose your neighborhood to see relevant content in your area
+            We need to verify your location to provide neighborhood access
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <Select onValueChange={updateUserLocation}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select your neighborhood" />
-              </SelectTrigger>
-              <SelectContent>
-                {neighborhoods?.map((neighborhood) => (
-                  <SelectItem key={neighborhood.id} value={neighborhood.id}>
-                    {neighborhood.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <div className="mt-6">
-              <LocationMap />
+          {noAccess ? (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Access Denied</AlertTitle>
+              <AlertDescription>
+                Sorry, we couldn't verify your location within any of our registered neighborhoods. 
+                This app is currently only available to residents within specific neighborhoods.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="space-y-4">
+              <div className="text-center">
+                {locationLoading ? (
+                  <p>Detecting your location...</p>
+                ) : (
+                  <p>Please wait while we verify your location...</p>
+                )}
+              </div>
+              <div className="mt-6">
+                <LocationMap />
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

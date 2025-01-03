@@ -34,8 +34,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
   
-  // Redirect to location setup if user has no location set
-  if (!profile?.latitude || !profile?.longitude) {
+  // Redirect to location setup if user has no verified neighborhood
+  if (!profile?.neighborhood_id) {
     return <Navigate to="/location-setup" state={{ from: location }} replace />;
   }
   

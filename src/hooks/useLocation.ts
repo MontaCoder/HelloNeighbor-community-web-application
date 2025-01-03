@@ -2,11 +2,13 @@ import { useState, useCallback } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { useNavigate } from 'react-router-dom';
 
 export const useLocation = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const findNeighborhood = async (latitude: number, longitude: number) => {
     try {
@@ -26,6 +28,15 @@ export const useLocation = () => {
       // First find the neighborhood for this location
       const neighborhood_id = await findNeighborhood(latitude, longitude);
 
+      if (!neighborhood_id) {
+        toast({
+          title: "Location not in service area",
+          description: "Sorry, we don't currently serve your area.",
+          variant: "destructive"
+        });
+        return false;
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update({ 
@@ -39,21 +50,22 @@ export const useLocation = () => {
       if (error) throw error;
 
       toast({
-        title: "Location updated",
-        description: "Your location has been updated successfully."
+        title: "Location verified",
+        description: "Welcome to your neighborhood!"
       });
 
+      navigate('/dashboard');
       return true;
     } catch (error) {
       console.error('Error updating location:', error);
       toast({
-        title: "Error updating location",
+        title: "Error verifying location",
         description: "Please try again later.",
         variant: "destructive"
       });
       return false;
     }
-  }, [user?.id, toast]);
+  }, [user?.id, toast, navigate]);
 
   const detectLocation = useCallback(async () => {
     setLoading(true);
