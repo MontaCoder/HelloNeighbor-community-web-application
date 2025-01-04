@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useLocation } from "@/hooks/useLocation";
 import { Button } from "@/components/ui/button";
+import { LocationDetector } from "@/components/location/LocationDetector";
 
 export default function LocationSetup() {
   const { toast } = useToast();
@@ -19,14 +20,20 @@ export default function LocationSetup() {
   const [noAccess, setNoAccess] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
 
+  console.log("LocationSetup rendering, user:", user); // Debug log
+
   // Check if user is admin
-  const { data: isAdmin } = useQuery({
+  const { data: isAdmin, isLoading: isAdminLoading } = useQuery({
     queryKey: ["is-admin", user?.id],
     queryFn: async () => {
+      if (!user?.id) return false;
       const { data, error } = await supabase
         .rpc('is_admin', { user_id: user?.id });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error checking admin status:", error);
+        return false;
+      }
       return data;
     },
     enabled: !!user
@@ -41,7 +48,10 @@ export default function LocationSetup() {
         .select('*')
         .order('name');
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching neighborhoods:", error);
+        throw error;
+      }
       return data;
     }
   });
@@ -49,6 +59,7 @@ export default function LocationSetup() {
   // Redirect admin users to admin panel
   useEffect(() => {
     if (isAdmin) {
+      console.log("User is admin, redirecting to admin panel");
       navigate("/admin");
     }
   }, [isAdmin, navigate]);
@@ -60,6 +71,7 @@ export default function LocationSetup() {
         console.log("Starting location verification...");
         const success = await detectLocation();
         if (!success) {
+          console.log("Location verification failed");
           setNoAccess(true);
           // Get debug info
           const { data: debug } = await supabase
@@ -67,18 +79,23 @@ export default function LocationSetup() {
             .select('id, name, boundaries')
             .limit(1);
           setDebugInfo(debug);
-          console.log("Location verification failed. Debug info:", debug);
+          console.log("Debug info:", debug);
         }
       } catch (error) {
         console.error('Error detecting location:', error);
         setNoAccess(true);
+        toast({
+          title: "Error",
+          description: "Failed to detect location. Please try again.",
+          variant: "destructive",
+        });
       }
     };
 
     if (!isAdmin && user) {
       checkLocation();
     }
-  }, [detectLocation, isAdmin, user]);
+  }, [detectLocation, isAdmin, user, toast]);
 
   const handleRetryLocation = async () => {
     setNoAccess(false);
@@ -87,6 +104,19 @@ export default function LocationSetup() {
       setNoAccess(true);
     }
   };
+
+  // Show loading state while checking admin status
+  if (isAdminLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FAF9F6] p-4">
+        <Card className="w-full max-w-2xl">
+          <CardContent className="p-6 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isAdmin) return null;
 
@@ -150,6 +180,7 @@ export default function LocationSetup() {
                   <p>Please wait while we verify your location...</p>
                 )}
               </div>
+              <LocationDetector />
               <div className="mt-6">
                 <LocationMap />
               </div>
