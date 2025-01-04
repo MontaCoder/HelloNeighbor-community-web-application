@@ -70,14 +70,6 @@ export default function AuthPage() {
               },
             }}
             providers={[]}
-            onError={(error) => {
-              toast({
-                title: "Authentication Error",
-                description: error.message,
-                variant: "destructive",
-              });
-              console.error('Auth error:', error);
-            }}
           />
         </CardContent>
       </Card>
