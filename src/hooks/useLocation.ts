@@ -19,6 +19,11 @@ export const useLocation = () => {
 
       if (error) {
         console.error('Error in findNeighborhood:', error);
+        toast({
+          title: "Location Error",
+          description: "Unable to verify your neighborhood. Please try again.",
+          variant: "destructive"
+        });
         throw error;
       }
       
@@ -26,6 +31,11 @@ export const useLocation = () => {
       return neighborhood;
     } catch (error) {
       console.error('Error finding neighborhood:', error);
+      toast({
+        title: "Location Error",
+        description: "Failed to find your neighborhood. Please try again or contact support.",
+        variant: "destructive"
+      });
       return null;
     }
   };
@@ -34,12 +44,14 @@ export const useLocation = () => {
     try {
       console.log('Updating user location:', { latitude, longitude });
       
-      // First find the neighborhood for this location
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+
       const neighborhood_id = await findNeighborhood(latitude, longitude);
       console.log('Resolved neighborhood_id:', neighborhood_id);
 
       if (!neighborhood_id) {
-        console.log('No neighborhood found for location');
         toast({
           title: "Location not in service area",
           description: "Sorry, we don't currently serve your area.",
@@ -56,7 +68,7 @@ export const useLocation = () => {
           neighborhood_id,
           updated_at: new Date().toISOString()
         })
-        .eq('id', user?.id);
+        .eq('id', user.id);
 
       if (error) {
         console.error('Error updating profile:', error);
@@ -76,7 +88,7 @@ export const useLocation = () => {
       console.error('Error updating location:', error);
       toast({
         title: "Error verifying location",
-        description: "Please try again later.",
+        description: "Please try again later or contact support.",
         variant: "destructive"
       });
       return false;
@@ -92,7 +104,7 @@ export const useLocation = () => {
       console.error('Geolocation not supported by browser');
       toast({
         title: "Geolocation not supported",
-        description: "Your browser doesn't support location detection.",
+        description: "Your browser doesn't support location detection. Please try a different browser.",
         variant: "destructive"
       });
       return false;
@@ -121,11 +133,10 @@ export const useLocation = () => {
         position.coords.longitude
       );
 
-      setLoading(false);
       return success;
     } catch (error) {
       console.error('Geolocation error:', error);
-      let errorMessage = "Failed to detect location";
+      let errorMessage = "Failed to detect location. Please try again.";
       
       if (error instanceof GeolocationPositionError) {
         switch (error.code) {
@@ -133,7 +144,7 @@ export const useLocation = () => {
             errorMessage = "Location access denied. Please enable location services in your browser settings.";
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = "Location information unavailable. Please try again.";
+            errorMessage = "Location information unavailable. Please try again or check your device settings.";
             break;
           case error.TIMEOUT:
             errorMessage = "Location request timed out. Please check your connection and try again.";
@@ -141,13 +152,14 @@ export const useLocation = () => {
         }
       }
 
-      setLoading(false);
       toast({
         title: "Location detection failed",
         description: errorMessage,
         variant: "destructive"
       });
       return false;
+    } finally {
+      setLoading(false);
     }
   }, [toast, updateUserLocation]);
 
