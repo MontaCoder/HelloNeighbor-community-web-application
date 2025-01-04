@@ -6,16 +6,42 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { toast } from "@/components/ui/use-toast";
 
 export default function AuthPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.onAuthStateChange((event, session) => {
+    const handleAuthChange = async (event: string, session: any) => {
+      if (session) {
+        navigate("/dashboard");
+      } else if (event === 'SIGNED_OUT') {
+        navigate("/");
+      }
+    };
+
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        toast({
+          title: "Authentication Error",
+          description: "There was a problem checking your session. Please try again.",
+          variant: "destructive",
+        });
+        console.error('Session check error:', error);
+        return;
+      }
       if (session) {
         navigate("/dashboard");
       }
     });
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   return (
@@ -44,6 +70,14 @@ export default function AuthPage() {
               },
             }}
             providers={[]}
+            onError={(error) => {
+              toast({
+                title: "Authentication Error",
+                description: error.message,
+                variant: "destructive",
+              });
+              console.error('Auth error:', error);
+            }}
           />
         </CardContent>
       </Card>
