@@ -29,14 +29,38 @@ export function EventForm({ onSuccess }: EventFormProps) {
 
   const onSubmit = async (values: any) => {
     try {
+      // Validate timestamps
+      if (!values.start_time || !values.end_time) {
+        toast({
+          title: "Error",
+          description: "Start time and end time are required",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Ensure the timestamps are valid
+      const startTime = new Date(values.start_time).toISOString();
+      const endTime = new Date(values.end_time).toISOString();
+
+      // Validate end time is after start time
+      if (new Date(endTime) <= new Date(startTime)) {
+        toast({
+          title: "Error",
+          description: "End time must be after start time",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from("events")
         .insert({
           title: values.title,
           description: values.description,
           location: values.location,
-          start_time: values.start_time,
-          end_time: values.end_time,
+          start_time: startTime,
+          end_time: endTime,
           image_url: values.image_url,
           created_by: user?.id,
           neighborhood_id: profile?.neighborhood_id
@@ -74,6 +98,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
               id="title"
               {...form.register("title")}
               placeholder="Event title"
+              required
             />
           </div>
 
@@ -83,6 +108,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
               id="description"
               {...form.register("description")}
               placeholder="Event description"
+              required
             />
           </div>
 
@@ -92,6 +118,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
               id="location"
               {...form.register("location")}
               placeholder="Event location"
+              required
             />
           </div>
 
@@ -102,6 +129,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
                 id="start_time"
                 type="datetime-local"
                 {...form.register("start_time")}
+                required
               />
             </div>
 
@@ -111,6 +139,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
                 id="end_time"
                 type="datetime-local"
                 {...form.register("end_time")}
+                required
               />
             </div>
           </div>
