@@ -1,12 +1,28 @@
-import { Calendar } from "lucide-react";
+import { Calendar, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { EventCard } from "@/components/dashboard/events/EventCard";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+
+interface Event {
+  id: string;
+  title: string;
+  description?: string;
+  location?: string;
+  start_time: string;
+  end_time: string;
+  image_url?: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  neighborhood_id: string;
+  profiles: {
+    full_name: string;
+  };
+}
 
 export function EventsPreview() {
   const { toast } = useToast();
@@ -24,7 +40,7 @@ export function EventsPreview() {
         .limit(5);
 
       if (error) throw error;
-      return data;
+      return data as Event[];
     },
     enabled: !!profile?.neighborhood_id,
     staleTime: 30 * 1000,
@@ -56,7 +72,7 @@ export function EventsPreview() {
     }
   };
 
-  const handleEdit = async (eventId: string, values: any) => {
+  const handleEdit = async (eventId: string, values: Partial<Event>) => {
     try {
       const { error } = await supabase
         .from("events")
