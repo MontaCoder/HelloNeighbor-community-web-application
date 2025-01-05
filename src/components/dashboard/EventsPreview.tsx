@@ -22,12 +22,12 @@ export function EventsPreview() {
         .gte('end_time', new Date().toISOString())
         .order("start_time", { ascending: true })
         .limit(5);
-      
+
       if (error) throw error;
       return data;
     },
     enabled: !!profile?.neighborhood_id,
-    staleTime: 30 * 1000, // Cache for 30 seconds
+    staleTime: 30 * 1000,
     retry: 2
   });
 
@@ -92,8 +92,8 @@ export function EventsPreview() {
   return (
     <Card className="animate-fade-in">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg font-bold">Upcoming Events</CardTitle>
-        <Calendar className="h-5 w-5 text-accent" />
+        <CardTitle className="text-base md:text-lg font-bold">Upcoming Events</CardTitle>
+        <Calendar className="h-4 w-4 md:h-5 md:w-5 text-accent" />
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -107,13 +107,13 @@ export function EventsPreview() {
             </AlertDescription>
           </Alert>
         ) : events?.length === 0 ? (
-          <p className="text-center text-gray-500 p-4">
+          <p className="text-center text-gray-500 p-4 text-sm md:text-base">
             No upcoming events in your neighborhood
           </p>
         ) : (
           <div className="space-y-4">
             {events?.map((event) => (
-              <EventCard 
+              <EventCard
                 key={event.id}
                 event={event}
                 onDelete={handleDelete}

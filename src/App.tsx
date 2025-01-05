@@ -27,7 +27,7 @@ const queryClient = new QueryClient({
 
 function LoadingSpinner() {
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-background">
+    <div className="min-h-screen w-full flex items-center justify-center bg-background">
       <Loader2 className="h-8 w-8 animate-spin text-primary" />
     </div>
   );
@@ -105,9 +105,11 @@ const App = () => (
     <TooltipProvider>
       <BrowserRouter>
         <AuthProvider>
-          <AppRoutes />
-          <Toaster />
-          <Sonner />
+          <div className="min-h-screen flex flex-col">
+            <AppRoutes />
+            <Toaster />
+            <Sonner />
+          </div>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
