@@ -14,15 +14,31 @@ import Messages from "./pages/Messages";
 import Neighbors from "./pages/Neighbors";
 import Settings from "./pages/Settings";
 import Admin from "./pages/Admin";
+import { Loader2 } from "lucide-react";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false
+    }
+  }
+});
+
+function LoadingSpinner() {
+  return (
+    <div className="h-screen w-full flex items-center justify-center bg-background">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading, profile } = useAuth();
   const location = useLocation();
   
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />;
   }
   
   if (!user) {
@@ -35,8 +51,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
   
+  // Show loading state while profile is being fetched
+  if (!profile && location.pathname !== '/location-setup') {
+    return <LoadingSpinner />;
+  }
+  
   // Redirect to location setup if user has no verified neighborhood
-  if (!profile?.neighborhood_id) {
+  if (!profile?.neighborhood_id && location.pathname !== '/location-setup') {
     console.log("No neighborhood set, redirecting to location setup");
     return <Navigate to="/location-setup" state={{ from: location }} replace />;
   }
@@ -48,7 +69,7 @@ function AppRoutes() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />;
   }
 
   return (
