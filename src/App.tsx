@@ -26,6 +26,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
   
   if (!user) {
+    console.log("User not authenticated, redirecting to auth");
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
   
@@ -36,6 +37,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   
   // Redirect to location setup if user has no verified neighborhood
   if (!profile?.neighborhood_id) {
+    console.log("No neighborhood set, redirecting to location setup");
     return <Navigate to="/location-setup" state={{ from: location }} replace />;
   }
   

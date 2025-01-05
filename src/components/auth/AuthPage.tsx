@@ -13,9 +13,12 @@ export default function AuthPage() {
 
   useEffect(() => {
     const handleAuthChange = async (event: string, session: any) => {
+      console.log("Auth change detected:", event, session?.user?.id);
       if (session) {
+        console.log("User is authenticated, redirecting to dashboard");
         navigate("/dashboard");
       } else if (event === 'SIGNED_OUT') {
+        console.log("User signed out, redirecting to home");
         navigate("/");
       }
     };
@@ -32,6 +35,7 @@ export default function AuthPage() {
         return;
       }
       if (session) {
+        console.log("Existing session found, redirecting to dashboard");
         navigate("/dashboard");
       }
     });

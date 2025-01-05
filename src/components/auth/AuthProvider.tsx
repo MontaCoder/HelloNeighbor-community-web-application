@@ -28,6 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Initial session check
     const initializeAuth = async () => {
       try {
+        console.log("Initializing auth...");
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
+        console.log("Session check complete:", session ? "User logged in" : "No session");
         setUser(session?.user ?? null);
         if (session?.user) {
           await fetchProfile(session.user.id);
@@ -55,7 +57,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initializeAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, session?.user?.id);
       try {
         setUser(session?.user ?? null);
         if (session?.user) {
@@ -77,6 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log("Fetching profile for user:", userId);
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -93,6 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
 
+      console.log("Profile fetched:", data);
       setProfile(data);
     } catch (error) {
       console.error('Error in fetchProfile:', error);
