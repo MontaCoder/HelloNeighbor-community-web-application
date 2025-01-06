@@ -35,18 +35,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Error fetching profile:', error);
-        // Retry up to 3 times with exponential backoff
         if (retryCount < 3) {
           const delay = Math.pow(2, retryCount) * 1000;
           console.log(`Retrying in ${delay}ms...`);
           setTimeout(() => fetchProfile(userId, retryCount + 1), delay);
           return;
         }
-        toast({
-          title: "Profile Error",
-          description: "There was a problem loading your profile. Some features may be limited.",
-          variant: "destructive"
-        });
         throw error;
       }
 
@@ -67,7 +61,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    // Initial session check
     const initializeAuth = async () => {
       try {
         console.log("Initializing auth...");
@@ -75,12 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (error) {
           console.error('Error checking session:', error);
-          toast({
-            title: "Authentication Error",
-            description: "There was a problem checking your session. Please try logging in again.",
-            variant: "destructive"
-          });
-          return;
+          throw error;
         }
 
         console.log("Session check complete:", session ? "User logged in" : "No session");
@@ -100,20 +88,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initializeAuth();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session?.user?.id);
       if (mounted) {
-        try {
-          setUser(session?.user ?? null);
-          if (session?.user) {
-            await fetchProfile(session.user.id);
-          } else {
-            setProfile(null);
-            setLoading(false);
-          }
-        } catch (error) {
-          console.error('Error in auth state change:', error);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        } else {
+          setProfile(null);
           setLoading(false);
         }
       }
@@ -127,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ user, profile, loading }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
