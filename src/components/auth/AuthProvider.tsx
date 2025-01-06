@@ -35,9 +35,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Error fetching profile:', error);
+        // Implement exponential backoff for retries
         if (retryCount < 3) {
-          const delay = Math.pow(2, retryCount) * 1000;
-          console.log(`Retrying in ${delay}ms...`);
+          const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff: 1s, 2s, 4s
+          console.log(`Retrying profile fetch in ${delay}ms...`);
           setTimeout(() => fetchProfile(userId, retryCount + 1), delay);
           return;
         }
