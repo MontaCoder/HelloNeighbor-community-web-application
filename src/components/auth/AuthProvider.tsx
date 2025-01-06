@@ -41,6 +41,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setTimeout(() => fetchProfile(userId, retryCount + 1), delay);
           return;
         }
+        toast({
+          title: "Profile Error",
+          description: "Unable to load profile data. Please refresh the page.",
+          variant: "destructive"
+        });
         throw error;
       }
 
@@ -68,6 +73,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (error) {
           console.error('Error checking session:', error);
+          toast({
+            title: "Session Error",
+            description: "There was a problem checking your session. Please try logging in again.",
+            variant: "destructive"
+          });
           throw error;
         }
 
@@ -82,7 +92,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('Error in initializeAuth:', error);
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setLoading(false);
+          navigate('/auth');
+        }
       }
     };
 
@@ -97,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           setProfile(null);
           setLoading(false);
+          navigate('/auth');
         }
       }
     });
@@ -105,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   return (
     <AuthContext.Provider value={{ user, profile, loading }}>
