@@ -22,6 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initializationComplete, setInitializationComplete] = useState(false);
   const navigate = useNavigate();
 
   const fetchProfile = async (userId: string, retryCount = 0) => {
@@ -35,7 +36,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Error fetching profile:', error);
-        // Implement exponential backoff for retries
         if (retryCount < 3) {
           const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff: 1s, 2s, 4s
           console.log(`Retrying profile fetch in ${delay}ms...`);
@@ -50,17 +50,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
 
+      if (!data && retryCount < 3) {
+        // Profile might not be created yet due to trigger delay
+        const delay = Math.pow(2, retryCount) * 1000;
+        console.log(`Profile not found, retrying in ${delay}ms...`);
+        setTimeout(() => fetchProfile(userId, retryCount + 1), delay);
+        return;
+      }
+
       console.log("Profile fetched:", data);
       setProfile(data);
+      setLoading(false);
     } catch (error) {
       console.error('Error in fetchProfile:', error);
+      setLoading(false);
       toast({
         title: "Profile Error",
         description: "Unable to load profile data. Please try refreshing the page.",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -87,13 +95,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(session?.user ?? null);
           if (session?.user) {
             await fetchProfile(session.user.id);
-          } else {
-            setLoading(false);
           }
+          setInitializationComplete(true);
+          setLoading(false);
         }
       } catch (error) {
         console.error('Error in initializeAuth:', error);
         if (mounted) {
+          setInitializationComplete(true);
           setLoading(false);
           navigate('/auth');
         }
@@ -111,7 +120,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           setProfile(null);
           setLoading(false);
-          navigate('/auth');
+          if (initializationComplete) {
+            navigate('/auth');
+          }
         }
       }
     });
@@ -120,7 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, initializationComplete]);
 
   return (
     <AuthContext.Provider value={{ user, profile, loading }}>
