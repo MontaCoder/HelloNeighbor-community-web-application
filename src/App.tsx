@@ -15,11 +15,13 @@ import Neighbors from "./pages/Neighbors";
 import Settings from "./pages/Settings";
 import Admin from "./pages/Admin";
 import { Loader2 } from "lucide-react";
+import { toast } from "./components/ui/use-toast";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
+      retry: 3,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       refetchOnWindowFocus: false
     }
   }
@@ -27,8 +29,9 @@ const queryClient = new QueryClient({
 
 function LoadingSpinner() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-background">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background gap-4">
       <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <p className="text-sm text-muted-foreground">Loading your profile...</p>
     </div>
   );
 }
