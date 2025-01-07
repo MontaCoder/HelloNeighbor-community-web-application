@@ -18,8 +18,8 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    // Enable minification in production
-    minify: 'terser',
+    // Only enable minification in production
+    minify: mode === 'production' ? 'esbuild' : false,
     // Configure chunk size optimization
     rollupOptions: {
       output: {
