@@ -25,7 +25,7 @@ export function EventForm({ onSubmit, defaultValues = {}, mode = 'create' }: Eve
   });
 
   return (
-    <DialogContent className="sm:max-w-[425px] md:max-w-[600px] h-[90vh] md:h-auto overflow-y-auto">
+    <DialogContent>
       <DialogHeader>
         <DialogTitle>{mode === 'create' ? 'Create New Event' : 'Edit Event'}</DialogTitle>
       </DialogHeader>
@@ -38,7 +38,7 @@ export function EventForm({ onSubmit, defaultValues = {}, mode = 'create' }: Eve
               <FormItem>
                 <FormLabel>Title</FormLabel>
                 <FormControl>
-                  <Input placeholder="Event title" {...field} className="text-sm md:text-base" />
+                  <Input placeholder="Event title" {...field} />
                 </FormControl>
               </FormItem>
             )}
@@ -50,7 +50,7 @@ export function EventForm({ onSubmit, defaultValues = {}, mode = 'create' }: Eve
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <Input placeholder="Event description" {...field} className="text-sm md:text-base" />
+                  <Input placeholder="Event description" {...field} />
                 </FormControl>
               </FormItem>
             )}
@@ -62,37 +62,35 @@ export function EventForm({ onSubmit, defaultValues = {}, mode = 'create' }: Eve
               <FormItem>
                 <FormLabel>Location</FormLabel>
                 <FormControl>
-                  <Input placeholder="Event location" {...field} className="text-sm md:text-base" />
+                  <Input placeholder="Event location" {...field} />
                 </FormControl>
               </FormItem>
             )}
           />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="start_time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Start Time</FormLabel>
-                  <FormControl>
-                    <Input type="datetime-local" {...field} className="text-sm md:text-base" />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="end_time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>End Time</FormLabel>
-                  <FormControl>
-                    <Input type="datetime-local" {...field} className="text-sm md:text-base" />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="start_time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Start Time</FormLabel>
+                <FormControl>
+                  <Input type="datetime-local" {...field} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="end_time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>End Time</FormLabel>
+                <FormControl>
+                  <Input type="datetime-local" {...field} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="image_url"

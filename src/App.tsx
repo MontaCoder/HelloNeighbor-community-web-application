@@ -14,34 +14,15 @@ import Messages from "./pages/Messages";
 import Neighbors from "./pages/Neighbors";
 import Settings from "./pages/Settings";
 import Admin from "./pages/Admin";
-import { Loader2 } from "lucide-react";
-import { toast } from "./components/ui/use-toast";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 3,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-      refetchOnWindowFocus: false
-    }
-  }
-});
-
-function LoadingSpinner() {
-  return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background gap-4">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      <p className="text-sm text-muted-foreground">Loading your profile...</p>
-    </div>
-  );
-}
+const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading, profile } = useAuth();
   const location = useLocation();
   
   if (loading) {
-    return <LoadingSpinner />;
+    return <div>Loading...</div>;
   }
   
   if (!user) {
@@ -54,13 +35,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
   
-  // Show loading state while profile is being fetched
-  if (!profile && location.pathname !== '/location-setup') {
-    return <LoadingSpinner />;
-  }
-  
   // Redirect to location setup if user has no verified neighborhood
-  if (!profile?.neighborhood_id && location.pathname !== '/location-setup') {
+  if (!profile?.neighborhood_id) {
     console.log("No neighborhood set, redirecting to location setup");
     return <Navigate to="/location-setup" state={{ from: location }} replace />;
   }
@@ -72,7 +48,7 @@ function AppRoutes() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <div>Loading...</div>;
   }
 
   return (
@@ -108,11 +84,9 @@ const App = () => (
     <TooltipProvider>
       <BrowserRouter>
         <AuthProvider>
-          <div className="min-h-screen flex flex-col">
-            <AppRoutes />
-            <Toaster />
-            <Sonner />
-          </div>
+          <AppRoutes />
+          <Toaster />
+          <Sonner />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

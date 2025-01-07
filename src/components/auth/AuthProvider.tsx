@@ -24,6 +24,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    // Initial session check
+    const initializeAuth = async () => {
+      try {
+        console.log("Initializing auth...");
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error checking session:', error);
+          toast({
+            title: "Authentication Error",
+            description: "There was a problem checking your session. Please try logging in again.",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        console.log("Session check complete:", session ? "User logged in" : "No session");
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error in initializeAuth:', error);
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, session?.user?.id);
+      try {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        } else {
+          setProfile(null);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error in auth state change:', error);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   const fetchProfile = async (userId: string) => {
     try {
       console.log("Fetching profile for user:", userId);
@@ -37,90 +91,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Error fetching profile:', error);
         toast({
           title: "Profile Error",
-          description: "Unable to load profile data. Please refresh the page.",
+          description: "There was a problem loading your profile. Some features may be limited.",
           variant: "destructive"
         });
-        setLoading(false);
-        return;
+        throw error;
       }
 
       console.log("Profile fetched:", data);
       setProfile(data);
-      setLoading(false);
     } catch (error) {
       console.error('Error in fetchProfile:', error);
-      setLoading(false);
       toast({
         title: "Profile Error",
         description: "Unable to load profile data. Please try refreshing the page.",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    let mounted = true;
-
-    const initializeAuth = async () => {
-      try {
-        console.log("Initializing auth...");
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error checking session:', error);
-          toast({
-            title: "Session Error",
-            description: "There was a problem checking your session. Please try logging in again.",
-            variant: "destructive"
-          });
-          setLoading(false);
-          navigate('/auth');
-          return;
-        }
-
-        console.log("Session check complete:", session ? "User logged in" : "No session");
-        if (mounted) {
-          setUser(session?.user ?? null);
-          if (session?.user) {
-            await fetchProfile(session.user.id);
-          } else {
-            setLoading(false);
-          }
-        }
-      } catch (error) {
-        console.error('Error in initializeAuth:', error);
-        if (mounted) {
-          setLoading(false);
-          navigate('/auth');
-        }
-      }
-    };
-
-    initializeAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session?.user?.id);
-      if (mounted) {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
-          setLoading(false);
-          navigate('/auth');
-        }
-      }
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
-
   return (
     <AuthContext.Provider value={{ user, profile, loading }}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }

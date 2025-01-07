@@ -1,58 +1,51 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bell } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { AlertCard } from "./AlertCard";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { Loader2 } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function AlertsPreview() {
   const { toast } = useToast();
   const { profile } = useAuth();
 
-  const { data: alerts, isLoading, error, refetch } = useQuery({
-    queryKey: ["alerts-preview", profile?.neighborhood_id],
+  const { data: alerts, refetch } = useQuery({
+    queryKey: ["alerts-preview", profile?.city],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("alerts")
-        .select("*, profiles:created_by(full_name)")
-        .eq('neighborhood_id', profile?.neighborhood_id)
+        .select("*")
+        .eq('city', profile?.city)
         .order("created_at", { ascending: false })
-        .limit(5);
+        .limit(3);
       
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id,
-    staleTime: 30 * 1000, // Cache for 30 seconds
-    retry: 2
+    enabled: !!profile?.city
   });
 
   const handleDelete = async (alertId: string) => {
-    try {
-      const { error } = await supabase
-        .from("alerts")
-        .delete()
-        .eq("id", alertId);
+    const { error } = await supabase
+      .from("alerts")
+      .delete()
+      .eq("id", alertId);
 
-      if (error) throw error;
-
+    if (error) {
       toast({
-        title: "Alert deleted",
-        description: "The alert has been removed successfully."
-      });
-
-      refetch();
-    } catch (error: any) {
-      console.error('Error deleting alert:', error);
-      toast({
-        title: "Error",
-        description: error.message || "There was a problem deleting the alert.",
+        title: "Error deleting alert",
+        description: "Please try again later.",
         variant: "destructive"
       });
+      return;
     }
+
+    toast({
+      title: "Alert deleted",
+      description: "The alert has been removed successfully."
+    });
+    refetch();
   };
 
   const handleEdit = async (alertId: string, values: any) => {
@@ -64,7 +57,7 @@ export function AlertsPreview() {
           message: values.message,
           type: values.type,
           urgency: values.urgency,
-          updated_at: new Date().toISOString()
+          city: profile?.city // Ensure city is set on edit
         })
         .eq("id", alertId);
 
@@ -72,15 +65,14 @@ export function AlertsPreview() {
 
       toast({
         title: "Alert updated",
-        description: "The alert has been updated successfully."
+        description: "Your alert has been updated successfully."
       });
 
       refetch();
-    } catch (error: any) {
-      console.error('Error updating alert:', error);
+    } catch (error) {
       toast({
-        title: "Error",
-        description: error.message || "There was a problem updating the alert.",
+        title: "Error updating alert",
+        description: "Please try again later.",
         variant: "destructive"
       });
     }
@@ -93,32 +85,16 @@ export function AlertsPreview() {
         <Bell className="h-5 w-5 text-accent" />
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center p-4">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          </div>
-        ) : error ? (
-          <Alert variant="destructive">
-            <AlertDescription>
-              {error.message || "Failed to load alerts"}
-            </AlertDescription>
-          </Alert>
-        ) : alerts?.length === 0 ? (
-          <p className="text-center text-gray-500 p-4">
-            No recent alerts in your neighborhood
-          </p>
-        ) : (
-          <div className="space-y-4">
-            {alerts?.map((alert) => (
-              <AlertCard 
-                key={alert.id}
-                alert={alert}
-                onDelete={handleDelete}
-                onEdit={handleEdit}
-              />
-            ))}
-          </div>
-        )}
+        <div className="space-y-4">
+          {alerts?.map((alert) => (
+            <AlertCard 
+              key={alert.id}
+              alert={alert}
+              onDelete={handleDelete}
+              onEdit={handleEdit}
+            />
+          ))}
+        </div>
       </CardContent>
     </Card>
   );
