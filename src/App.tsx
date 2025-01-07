@@ -15,14 +15,24 @@ import Neighbors from "./pages/Neighbors";
 import Settings from "./pages/Settings";
 import Admin from "./pages/Admin";
 
-const queryClient = new QueryClient();
+// Configure query client with optimized settings
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false, // Prevent unnecessary refetches
+      retry: 1, // Limit retries to reduce network load
+      staleTime: 1000 * 60 * 5, // Cache data for 5 minutes
+      cacheTime: 1000 * 60 * 30, // Keep unused data in cache for 30 minutes
+    },
+  },
+});
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading, profile } = useAuth();
   const location = useLocation();
   
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
   if (!user) {
@@ -44,11 +54,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function AppRoutes() {
+// Memoize routes component to prevent unnecessary rerenders
+const AppRoutes = React.memo(function AppRoutes() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
   return (
@@ -77,7 +88,7 @@ function AppRoutes() {
       <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
     </Routes>
   );
-}
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
