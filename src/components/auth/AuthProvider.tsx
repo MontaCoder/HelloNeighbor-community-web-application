@@ -27,6 +27,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = async (userId: string, retryCount = 0) => {
     try {
       console.log("Fetching profile for user:", userId);
+      
+      // Get current session to ensure fresh access token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
