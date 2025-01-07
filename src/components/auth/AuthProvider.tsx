@@ -24,8 +24,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const fetchProfile = async (userId: string, retryCount = 0) => {
+    try {
+      console.log("Fetching profile for user:", userId);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        
+        // Implement retry logic with exponential backoff
+        if (retryCount < 3) {
+          const backoffDelay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+          console.log(`Retrying profile fetch in ${backoffDelay}ms...`);
+          
+          setTimeout(() => {
+            fetchProfile(userId, retryCount + 1);
+          }, backoffDelay);
+          
+          return;
+        }
+
+        toast({
+          title: "Profile Error",
+          description: "There was a problem loading your profile. Some features may be limited.",
+          variant: "destructive"
+        });
+        throw error;
+      }
+
+      console.log("Profile fetched:", data);
+      setProfile(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error in fetchProfile:', error);
+      setLoading(false);
+      
+      toast({
+        title: "Profile Error",
+        description: "Unable to load profile data. Please try refreshing the page.",
+        variant: "destructive"
+      });
+    }
+  };
+
   useEffect(() => {
-    // Initial session check
+    let authListener: any;
+
     const initializeAuth = async () => {
       try {
         console.log("Initializing auth...");
@@ -43,11 +91,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         console.log("Session check complete:", session ? "User logged in" : "No session");
         setUser(session?.user ?? null);
+        
         if (session?.user) {
           await fetchProfile(session.user.id);
         } else {
           setLoading(false);
         }
+
+        // Set up real-time auth listener
+        authListener = supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log("Auth state changed:", event, session?.user?.id);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            await fetchProfile(session.user.id);
+          } else {
+            setProfile(null);
+            setLoading(false);
+          }
+        });
+
       } catch (error) {
         console.error('Error in initializeAuth:', error);
         setLoading(false);
@@ -56,60 +119,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initializeAuth();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session?.user?.id);
-      try {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Error in auth state change:', error);
-        setLoading(false);
-      }
-    });
-
     return () => {
-      subscription.unsubscribe();
+      if (authListener) {
+        authListener.subscription.unsubscribe();
+      }
     };
   }, []);
-
-  const fetchProfile = async (userId: string) => {
-    try {
-      console.log("Fetching profile for user:", userId);
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-        toast({
-          title: "Profile Error",
-          description: "There was a problem loading your profile. Some features may be limited.",
-          variant: "destructive"
-        });
-        throw error;
-      }
-
-      console.log("Profile fetched:", data);
-      setProfile(data);
-    } catch (error) {
-      console.error('Error in fetchProfile:', error);
-      toast({
-        title: "Profile Error",
-        description: "Unable to load profile data. Please try refreshing the page.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <AuthContext.Provider value={{ user, profile, loading }}>
