@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    let authSubscription: { unsubscribe: () => void } | null = null;
+    let cleanupSubscription: (() => void) | null = null;
 
     const initializeAuth = async () => {
       try {
@@ -110,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         // Set up real-time auth listener
-        authSubscription = supabase.auth.onAuthStateChange(async (event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
           console.log("Auth state changed:", event, session?.user?.id);
           if (mounted) {
             setUser(session?.user ?? null);
@@ -124,6 +124,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         });
 
+        // Store cleanup function
+        cleanupSubscription = () => subscription.unsubscribe();
+
       } catch (error) {
         console.error('Error in initializeAuth:', error);
         if (mounted) {
@@ -136,8 +139,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       mounted = false;
-      if (authSubscription) {
-        authSubscription.unsubscribe();
+      if (cleanupSubscription) {
+        cleanupSubscription();
       }
     };
   }, []);
