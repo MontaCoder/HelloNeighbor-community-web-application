@@ -22,10 +22,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initializationComplete, setInitializationComplete] = useState(false);
   const navigate = useNavigate();
 
-  const fetchProfile = async (userId: string, retryCount = 0) => {
+  const fetchProfile = async (userId: string) => {
     try {
       console.log("Fetching profile for user:", userId);
       const { data, error } = await supabase
@@ -36,25 +35,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Error fetching profile:', error);
-        if (retryCount < 3) {
-          const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff: 1s, 2s, 4s
-          console.log(`Retrying profile fetch in ${delay}ms...`);
-          setTimeout(() => fetchProfile(userId, retryCount + 1), delay);
-          return;
-        }
         toast({
           title: "Profile Error",
           description: "Unable to load profile data. Please refresh the page.",
           variant: "destructive"
         });
-        throw error;
-      }
-
-      if (!data && retryCount < 3) {
-        // Profile might not be created yet due to trigger delay
-        const delay = Math.pow(2, retryCount) * 1000;
-        console.log(`Profile not found, retrying in ${delay}ms...`);
-        setTimeout(() => fetchProfile(userId, retryCount + 1), delay);
+        setLoading(false);
         return;
       }
 
@@ -87,7 +73,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             description: "There was a problem checking your session. Please try logging in again.",
             variant: "destructive"
           });
-          throw error;
+          setLoading(false);
+          navigate('/auth');
+          return;
         }
 
         console.log("Session check complete:", session ? "User logged in" : "No session");
@@ -95,14 +83,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(session?.user ?? null);
           if (session?.user) {
             await fetchProfile(session.user.id);
+          } else {
+            setLoading(false);
           }
-          setInitializationComplete(true);
-          setLoading(false);
         }
       } catch (error) {
         console.error('Error in initializeAuth:', error);
         if (mounted) {
-          setInitializationComplete(true);
           setLoading(false);
           navigate('/auth');
         }
@@ -120,9 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           setProfile(null);
           setLoading(false);
-          if (initializationComplete) {
-            navigate('/auth');
-          }
+          navigate('/auth');
         }
       }
     });
@@ -131,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate, initializationComplete]);
+  }, [navigate]);
 
   return (
     <AuthContext.Provider value={{ user, profile, loading }}>
