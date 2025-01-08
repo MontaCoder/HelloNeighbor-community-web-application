@@ -9,6 +9,8 @@ import { LocationDetector } from "@/components/location/LocationDetector";
 import { LocationMap } from "@/components/location/LocationMap";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
+import { MapPin } from "lucide-react";
 
 const Index = () => {
   const { user, loading, profile } = useAuth();
@@ -83,26 +85,38 @@ const Index = () => {
       <SidebarProvider>
         <div className="min-h-screen flex w-full bg-[#FAF9F6]">
           <AppSidebar />
-          <main className="flex-1 p-6">
-            <div className="max-w-6xl mx-auto">
-              <header className="mb-8">
-                <h1 className="text-4xl font-bold text-primary mb-2">
-                  Welcome, {profile?.full_name || user?.email || "Neighbor"}
-                </h1>
-                {neighborhood && (
-                  <p className="text-lg text-gray-600 mb-4">
-                    Your Neighborhood: {neighborhood.name}
-                  </p>
-                )}
-                <LocationDetector />
-              </header>
+          <main className="flex-1 p-6 overflow-auto">
+            <div className="max-w-7xl mx-auto space-y-8">
+              <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div>
+                    <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                      Welcome back, {profile?.full_name || user?.email?.split('@')[0] || "Neighbor"}
+                    </h1>
+                    {neighborhood && (
+                      <div className="flex items-center text-gray-600">
+                        <MapPin className="h-5 w-5 mr-2" />
+                        <p className="text-lg">
+                          {neighborhood.name}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <LocationDetector />
+                </div>
+              </div>
               
               <div className="space-y-6">
-                <LocationMap 
-                  events={nearbyEvents} 
-                  alerts={nearbyAlerts}
-                  items={nearbyItems}
-                />
+                <Card className="border-0 shadow-sm">
+                  <CardContent className="p-0">
+                    <LocationMap 
+                      events={nearbyEvents} 
+                      alerts={nearbyAlerts}
+                      items={nearbyItems}
+                    />
+                  </CardContent>
+                </Card>
+
                 <div className="grid gap-6 md:grid-cols-2">
                   <AlertsPreview />
                   <EventsPreview />
