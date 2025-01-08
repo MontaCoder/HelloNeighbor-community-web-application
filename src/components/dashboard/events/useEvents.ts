@@ -5,12 +5,11 @@ import { useAuth } from "@/components/auth/AuthProvider";
 
 export function useEvents() {
   const { toast } = useToast();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
 
   const { data: events, refetch } = useQuery({
     queryKey: ["events-preview", profile?.neighborhood_id],
     queryFn: async () => {
-      // Only fetch events from the user's neighborhood
       const { data, error } = await supabase
         .from("events")
         .select("*")
@@ -22,7 +21,7 @@ export function useEvents() {
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id // Only run query if user has a neighborhood set
+    enabled: !!profile?.neighborhood_id
   });
 
   const handleDelete = async (eventId: string) => {
@@ -79,9 +78,42 @@ export function useEvents() {
     }
   };
 
+  const handleCreate = async (values: any) => {
+    try {
+      const { error } = await supabase
+        .from("events")
+        .insert({
+          title: values.title,
+          description: values.description,
+          location: values.location,
+          start_time: values.start_time,
+          end_time: values.end_time,
+          image_url: values.image_url,
+          created_by: user?.id,
+          neighborhood_id: profile?.neighborhood_id
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Event created",
+        description: "Your event has been created successfully."
+      });
+
+      refetch();
+    } catch (error) {
+      toast({
+        title: "Error creating event",
+        description: "Please try again later.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return {
     events,
     handleDelete,
-    handleEdit
+    handleEdit,
+    handleCreate
   };
 }

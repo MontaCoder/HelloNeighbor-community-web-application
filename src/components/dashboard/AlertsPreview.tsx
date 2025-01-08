@@ -1,29 +1,32 @@
-import { Bell } from "lucide-react";
+import { Bell, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCard } from "./AlertCard";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 export function AlertsPreview() {
   const { toast } = useToast();
   const { profile } = useAuth();
+  const navigate = useNavigate();
 
   const { data: alerts, refetch } = useQuery({
-    queryKey: ["alerts-preview", profile?.city],
+    queryKey: ["alerts-preview", profile?.neighborhood_id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("alerts")
         .select("*")
-        .eq('city', profile?.city)
+        .eq('neighborhood_id', profile?.neighborhood_id)
         .order("created_at", { ascending: false })
         .limit(3);
       
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.city
+    enabled: !!profile?.neighborhood_id
   });
 
   const handleDelete = async (alertId: string) => {
@@ -57,7 +60,7 @@ export function AlertsPreview() {
           message: values.message,
           type: values.type,
           urgency: values.urgency,
-          city: profile?.city // Ensure city is set on edit
+          neighborhood_id: profile?.neighborhood_id
         })
         .eq("id", alertId);
 
@@ -82,10 +85,24 @@ export function AlertsPreview() {
     <Card className="animate-fade-in">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-lg font-bold">Recent Alerts</CardTitle>
-        <Bell className="h-5 w-5 text-accent" />
+        <div className="flex items-center gap-2">
+          <Bell className="h-5 w-5 text-accent" />
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => navigate('/alerts')}
+          >
+            View All
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          {alerts?.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No recent alerts
+            </p>
+          )}
           {alerts?.map((alert) => (
             <AlertCard 
               key={alert.id}
