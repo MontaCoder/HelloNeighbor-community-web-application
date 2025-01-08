@@ -31,7 +31,7 @@ export default function Events() {
                     Create New Event
                   </Button>
                 </DialogTrigger>
-                <EventForm onSuccess={handleEventCreated} />
+                <EventForm onSubmit={handleEventCreated} mode="create" />
               </Dialog>
             </div>
             <div className="space-y-6">

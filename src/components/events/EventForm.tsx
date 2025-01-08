@@ -1,19 +1,21 @@
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/shared/ImageUpload";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface EventFormProps {
-  onSuccess: () => void;
+  onSubmit: (values: any) => void;
+  defaultValues?: any;
+  mode?: 'create' | 'edit';
 }
 
-export function EventForm({ onSuccess }: EventFormProps) {
+export function EventForm({ onSubmit, defaultValues = {}, mode = 'create' }: EventFormProps) {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const form = useForm({
@@ -23,11 +25,12 @@ export function EventForm({ onSuccess }: EventFormProps) {
       location: "",
       start_time: "",
       end_time: "",
-      image_url: ""
+      image_url: "",
+      ...defaultValues
     }
   });
 
-  const onSubmit = async (values: any) => {
+  const handleSubmit = async (values: any) => {
     try {
       // Validate timestamps
       if (!values.start_time || !values.end_time) {
@@ -74,7 +77,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
       });
 
       form.reset();
-      onSuccess();
+      onSubmit(values);
     } catch (error) {
       console.error('Error creating event:', error);
       toast({
@@ -86,77 +89,75 @@ export function EventForm({ onSuccess }: EventFormProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Create New Event</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>{mode === 'create' ? 'Create New Event' : 'Edit Event'}</DialogTitle>
+      </DialogHeader>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="title">Title</Label>
+          <Input
+            id="title"
+            {...form.register("title")}
+            placeholder="Event title"
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            {...form.register("description")}
+            placeholder="Event description"
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="location">Location</Label>
+          <Input
+            id="location"
+            {...form.register("location")}
+            placeholder="Event location"
+            required
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="start_time">Start Time</Label>
             <Input
-              id="title"
-              {...form.register("title")}
-              placeholder="Event title"
+              id="start_time"
+              type="datetime-local"
+              {...form.register("start_time")}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              {...form.register("description")}
-              placeholder="Event description"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
+            <Label htmlFor="end_time">End Time</Label>
             <Input
-              id="location"
-              {...form.register("location")}
-              placeholder="Event location"
+              id="end_time"
+              type="datetime-local"
+              {...form.register("end_time")}
               required
             />
           </div>
+        </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start_time">Start Time</Label>
-              <Input
-                id="start_time"
-                type="datetime-local"
-                {...form.register("start_time")}
-                required
-              />
-            </div>
+        <div className="space-y-2">
+          <Label>Event Image</Label>
+          <ImageUpload
+            existingUrl={form.watch("image_url")}
+            onImageUploaded={(url) => form.setValue("image_url", url)}
+          />
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="end_time">End Time</Label>
-              <Input
-                id="end_time"
-                type="datetime-local"
-                {...form.register("end_time")}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Event Image</Label>
-            <ImageUpload
-              existingUrl={form.watch("image_url")}
-              onImageUploaded={(url) => form.setValue("image_url", url)}
-            />
-          </div>
-
-          <Button type="submit" className="w-full">
-            Create Event
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+        <Button type="submit" className="w-full">
+          {mode === 'create' ? 'Create Event' : 'Update Event'}
+        </Button>
+      </form>
+    </DialogContent>
   );
 }
