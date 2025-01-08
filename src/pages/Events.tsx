@@ -3,6 +3,9 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { EventForm } from "@/components/events/EventForm";
 import { EventList } from "@/components/events/EventList";
 import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import { Plus } from "lucide-react";
 
 export default function Events() {
   const queryClient = useQueryClient();
@@ -17,11 +20,21 @@ export default function Events() {
         <AppSidebar />
         <main className="flex-1 p-6">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold text-primary mb-6">
-              Community Events
-            </h1>
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-3xl font-bold text-primary">
+                Community Events
+              </h1>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create New Event
+                  </Button>
+                </DialogTrigger>
+                <EventForm onSuccess={handleEventCreated} />
+              </Dialog>
+            </div>
             <div className="space-y-6">
-              <EventForm onSuccess={handleEventCreated} />
               <EventList />
             </div>
           </div>
