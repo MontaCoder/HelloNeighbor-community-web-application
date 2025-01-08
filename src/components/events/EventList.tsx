@@ -11,17 +11,18 @@ export function EventList() {
   const { toast } = useToast();
 
   const { data: events, refetch } = useQuery({
-    queryKey: ["events", profile?.city],
+    queryKey: ["events", profile?.neighborhood_id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("events")
         .select("*")
+        .eq("neighborhood_id", profile?.neighborhood_id)
         .order("start_time", { ascending: true });
       
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.city
+    enabled: !!profile?.neighborhood_id
   });
 
   const handleDelete = async (id: string) => {
