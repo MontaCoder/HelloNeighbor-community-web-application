@@ -74,28 +74,6 @@ export default function AuthPage() {
               },
             }}
             providers={[]}
-            localization={{
-              variables: {
-                sign_in: {
-                  email_label: 'Email',
-                  password_label: 'Password',
-                  button_label: 'Sign In'
-                },
-                sign_up: {
-                  email_label: 'Email',
-                  password_label: 'Password',
-                  button_label: 'Sign Up'
-                }
-              }
-            }}
-            view="sign_in"
-            additionalData={{
-              full_name: {
-                required: true,
-                type: 'text',
-                label: 'Full Name',
-              }
-            }}
           />
         </CardContent>
       </Card>
