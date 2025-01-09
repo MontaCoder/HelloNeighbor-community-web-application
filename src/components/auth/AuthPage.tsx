@@ -74,6 +74,27 @@ export default function AuthPage() {
               },
             }}
             providers={[]}
+            localization={{
+              variables: {
+                sign_up: {
+                  full_name_label: 'Full Name',
+                  full_name_placeholder: 'Enter your full name',
+                  email_label: 'Email',
+                  password_label: 'Password',
+                  button_label: 'Sign Up',
+                }
+              }
+            }}
+            options={{
+              emailRedirectTo: `${window.location.origin}/auth/callback`,
+              signUpFields: [
+                {
+                  name: 'full_name',
+                  required: true,
+                  type: 'text',
+                }
+              ]
+            }}
           />
         </CardContent>
       </Card>
