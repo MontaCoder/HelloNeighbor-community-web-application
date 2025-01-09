@@ -63,13 +63,18 @@ export default function AuthPage() {
     checkSession();
 
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         setAuthError(null);
         toast({
           title: "Password Recovery",
           description: "Check your email for password reset instructions.",
         });
+      } else if (event === 'USER_UPDATED') {
+        const { error } = await supabase.auth.getSession();
+        if (error) {
+          setAuthError(getErrorMessage(error));
+        }
       } else {
         handleAuthChange(event, session);
       }
@@ -81,30 +86,15 @@ export default function AuthPage() {
     };
   }, [navigate]);
 
-  // Handle auth state changes and errors through the auth UI messages
-  const handleAuthMessage = (message: string) => {
-    console.log('Auth message:', message);
-    
-    // Clear previous error
-    setAuthError(null);
-
-    if (message.includes('user_already_exists')) {
-      const errorMsg = "This email is already registered. Please sign in instead.";
-      setAuthError(errorMsg);
-      toast({
-        title: "Authentication Error",
-        description: errorMsg,
-        variant: "destructive",
-      });
-    } else if (message.includes('invalid_credentials')) {
-      const errorMsg = "Invalid email or password. Please check your credentials.";
-      setAuthError(errorMsg);
-      toast({
-        title: "Authentication Error",
-        description: errorMsg,
-        variant: "destructive",
-      });
+  // Helper function to get user-friendly error messages
+  const getErrorMessage = (error: AuthError) => {
+    const errorMessage = error.message;
+    if (errorMessage.includes('user_already_exists') || error.message.includes('User already registered')) {
+      return "This email is already registered. Please sign in instead.";
+    } else if (errorMessage.includes('invalid_credentials')) {
+      return "Invalid email or password. Please check your credentials.";
     }
+    return "An error occurred during authentication. Please try again.";
   };
 
   return (
