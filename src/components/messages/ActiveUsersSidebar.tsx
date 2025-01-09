@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 interface User {
   id: string;
@@ -10,12 +11,14 @@ interface User {
   avatar_url: string | null;
   online_at?: string;
   status?: 'online' | 'offline' | 'away';
+  neighborhood_id?: string;
 }
 
 export function ActiveUsersSidebar() {
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { profile } = useAuth();
 
   useEffect(() => {
     // Subscribe to presence changes
@@ -42,28 +45,30 @@ export function ActiveUsersSidebar() {
         await channel.track(userStatus);
       });
 
-    // Fetch initial users
+    // Fetch initial users from the same neighborhood
     fetchUsers();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [profile?.neighborhood_id]);
 
   const fetchUsers = async () => {
+    if (!profile?.neighborhood_id) return;
+
     const { data: profiles } = await supabase
       .from('profiles')
       .select('*')
+      .eq('neighborhood_id', profile.neighborhood_id)
       .order('full_name');
     
     if (profiles) {
-      // Transform profiles to match User interface
       const transformedUsers: User[] = profiles.map(profile => ({
         id: profile.id,
         full_name: profile.full_name || '',
         avatar_url: profile.avatar_url,
         status: 'offline',
-        online_at: null
+        neighborhood_id: profile.neighborhood_id
       }));
       setUsers(transformedUsers);
     }
@@ -91,13 +96,14 @@ export function ActiveUsersSidebar() {
   };
 
   return (
-    <div className={`border-l transition-all duration-300 ${
-      isCollapsed ? 'w-16' : 'w-64'
+    <div className={`border-l transition-all duration-300 h-full overflow-y-auto ${
+      isCollapsed ? 'w-16' : 'w-64 md:w-72'
     }`}>
-      <div className="p-4">
+      <div className="p-4 sticky top-0 bg-background z-10 border-b">
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="mb-4 text-gray-500 hover:text-gray-700"
+          className="mb-4 text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors"
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {isCollapsed ? '→' : '←'}
         </button>
@@ -114,10 +120,10 @@ export function ActiveUsersSidebar() {
           </div>
         )}
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           {filteredUsers.map((user) => (
-            <div key={user.id} className="flex items-center gap-2">
-              <div className="relative">
+            <div key={user.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+              <div className="relative flex-shrink-0">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={user.avatar_url || ''} />
                   <AvatarFallback>
@@ -131,7 +137,7 @@ export function ActiveUsersSidebar() {
                 />
               </div>
               {!isCollapsed && (
-                <span className="text-sm truncate">
+                <span className="text-sm truncate flex-1">
                   {user.full_name}
                 </span>
               )}
