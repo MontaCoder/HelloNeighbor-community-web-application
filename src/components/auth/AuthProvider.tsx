@@ -34,7 +34,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('No active session');
       }
 
-      // Ensure proper URL formatting and request headers
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
