@@ -8,12 +8,15 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { ImageUpload } from "@/components/shared/ImageUpload";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export default function Settings() {
   const { profile, user } = useAuth();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || "",
+    avatar_url: profile?.avatar_url || "",
   });
 
   const { data: neighborhood } = useQuery({
@@ -54,6 +57,10 @@ export default function Settings() {
     }
   };
 
+  const handleAvatarUpload = (url: string) => {
+    setFormData(prev => ({ ...prev, avatar_url: url }));
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
   };
@@ -71,7 +78,21 @@ export default function Settings() {
                 <CardTitle>Profile Settings</CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="flex flex-col items-center space-y-4">
+                    <Avatar className="w-24 h-24">
+                      <AvatarImage src={formData.avatar_url} alt={formData.full_name} />
+                      <AvatarFallback>{formData.full_name?.charAt(0)?.toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <ImageUpload
+                      onImageUploaded={handleAvatarUpload}
+                      existingUrl={formData.avatar_url}
+                    >
+                      <Button type="button" variant="outline">
+                        Change Avatar
+                      </Button>
+                    </ImageUpload>
+                  </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">
                       Full Name
