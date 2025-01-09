@@ -1,19 +1,22 @@
 import { Bell, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCard } from "./AlertCard";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect } from "react";
 
 export function AlertsPreview() {
   const { toast } = useToast();
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const { data: alerts, refetch } = useQuery({
+  const { data: alerts, isLoading, refetch } = useQuery({
     queryKey: ["alerts-preview", profile?.neighborhood_id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -28,6 +31,25 @@ export function AlertsPreview() {
     },
     enabled: !!profile?.neighborhood_id
   });
+
+  useEffect(() => {
+    if (!profile?.neighborhood_id) return;
+
+    const channel = supabase.channel('alerts-preview')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'alerts',
+        filter: `neighborhood_id=eq.${profile.neighborhood_id}`
+      }, () => {
+        refetch();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.neighborhood_id]);
 
   const handleDelete = async (alertId: string) => {
     const { error } = await supabase
@@ -98,19 +120,24 @@ export function AlertsPreview() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {alerts?.length === 0 && (
+          {isLoading ? (
+            Array(3).fill(0).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full" />
+            ))
+          ) : alerts?.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
               No recent alerts
             </p>
+          ) : (
+            alerts?.map((alert) => (
+              <AlertCard 
+                key={alert.id}
+                alert={alert}
+                onDelete={handleDelete}
+                onEdit={handleEdit}
+              />
+            ))
           )}
-          {alerts?.map((alert) => (
-            <AlertCard 
-              key={alert.id}
-              alert={alert}
-              onDelete={handleDelete}
-              onEdit={handleEdit}
-            />
-          ))}
         </div>
       </CardContent>
     </Card>

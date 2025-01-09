@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { EventForm } from "./events/EventForm";
 import { useNavigate } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function EventsPreview() {
-  const { events, handleDelete, handleEdit, handleCreate } = useEvents();
+  const { events, isLoading, handleDelete, handleEdit, handleCreate } = useEvents();
   const navigate = useNavigate();
 
   return (
@@ -37,19 +38,24 @@ export function EventsPreview() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {events?.length === 0 && (
+          {isLoading ? (
+            Array(3).fill(0).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full" />
+            ))
+          ) : events?.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
               No upcoming events
             </p>
+          ) : (
+            events?.map((event) => (
+              <EventCard 
+                key={event.id}
+                event={event}
+                onDelete={handleDelete}
+                onEdit={handleEdit}
+              />
+            ))
           )}
-          {events?.map((event) => (
-            <EventCard 
-              key={event.id}
-              event={event}
-              onDelete={handleDelete}
-              onEdit={handleEdit}
-            />
-          ))}
         </div>
       </CardContent>
     </Card>

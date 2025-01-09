@@ -11,11 +11,15 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const { user, loading, profile } = useAuth();
+  const { toast } = useToast();
 
-  const { data: neighborhood } = useQuery({
+  const { data: neighborhood, isLoading: neighborhoodLoading } = useQuery({
     queryKey: ['neighborhood', profile?.neighborhood_id],
     queryFn: async () => {
       if (!profile?.neighborhood_id) return null;
@@ -31,7 +35,7 @@ const Index = () => {
     enabled: !!profile?.neighborhood_id
   });
 
-  const { data: nearbyEvents } = useQuery({
+  const { data: nearbyEvents, isLoading: eventsLoading } = useQuery({
     queryKey: ["nearby-events", profile?.neighborhood_id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -46,7 +50,7 @@ const Index = () => {
     enabled: !!profile?.neighborhood_id
   });
 
-  const { data: nearbyAlerts } = useQuery({
+  const { data: nearbyAlerts, isLoading: alertsLoading } = useQuery({
     queryKey: ["nearby-alerts", profile?.neighborhood_id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -61,7 +65,7 @@ const Index = () => {
     enabled: !!profile?.neighborhood_id
   });
 
-  const { data: nearbyItems } = useQuery({
+  const { data: nearbyItems, isLoading: itemsLoading } = useQuery({
     queryKey: ["nearby-items", profile?.neighborhood_id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -77,6 +81,42 @@ const Index = () => {
     enabled: !!profile?.neighborhood_id
   });
 
+  // Set up realtime subscriptions
+  useEffect(() => {
+    if (!profile?.neighborhood_id) return;
+
+    const channel = supabase.channel('dashboard-updates')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'events',
+        filter: `neighborhood_id=eq.${profile.neighborhood_id}`
+      }, () => {
+        // Refetch events when changes occur
+        queryClient.invalidateQueries(["nearby-events"]);
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'alerts',
+        filter: `neighborhood_id=eq.${profile.neighborhood_id}`
+      }, (payload) => {
+        // Show notification for new alerts
+        if (payload.eventType === 'INSERT') {
+          toast({
+            title: "New Alert",
+            description: "A new alert has been posted in your neighborhood",
+          });
+        }
+        queryClient.invalidateQueries(["nearby-alerts"]);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.neighborhood_id]);
+
   if (loading) return null;
 
   // If user is logged in, show the dashboard
@@ -90,10 +130,16 @@ const Index = () => {
               <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
-                    <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                      Welcome back, {profile?.full_name || user?.email?.split('@')[0] || "Neighbor"}
-                    </h1>
-                    {neighborhood && (
+                    {loading ? (
+                      <Skeleton className="h-8 w-64 mb-2" />
+                    ) : (
+                      <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                        Welcome back, {profile?.full_name || user?.email?.split('@')[0] || "Neighbor"}
+                      </h1>
+                    )}
+                    {neighborhoodLoading ? (
+                      <Skeleton className="h-6 w-48" />
+                    ) : neighborhood && (
                       <div className="flex items-center text-gray-600">
                         <MapPin className="h-5 w-5 mr-2" />
                         <p className="text-lg">

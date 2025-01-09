@@ -270,6 +270,50 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read: boolean | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -277,10 +321,13 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          last_seen: string | null
           latitude: number | null
           longitude: number | null
           neighborhood: string | null
           neighborhood_id: string | null
+          preferences: Json | null
+          status: string | null
           updated_at: string
           username: string | null
         }
@@ -290,10 +337,13 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          last_seen?: string | null
           latitude?: number | null
           longitude?: number | null
           neighborhood?: string | null
           neighborhood_id?: string | null
+          preferences?: Json | null
+          status?: string | null
           updated_at?: string
           username?: string | null
         }
@@ -303,10 +353,13 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          last_seen?: string | null
           latitude?: number | null
           longitude?: number | null
           neighborhood?: string | null
           neighborhood_id?: string | null
+          preferences?: Json | null
+          status?: string | null
           updated_at?: string
           username?: string | null
         }
