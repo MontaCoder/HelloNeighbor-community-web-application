@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AuthError } from "@supabase/supabase-js";
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -62,10 +63,8 @@ export default function AuthPage() {
     checkSession();
 
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'USER_DELETED') {
-        setAuthError("User account has been deleted.");
-      } else if (event === 'PASSWORD_RECOVERY') {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
         setAuthError(null);
         toast({
           title: "Password Recovery",
@@ -82,38 +81,30 @@ export default function AuthPage() {
     };
   }, [navigate]);
 
-  // Handle auth errors
-  const handleAuthError = (error: any) => {
-    console.error('Auth error:', error);
-    let errorMessage = "An unexpected error occurred. Please try again.";
+  // Handle auth state changes and errors through the auth UI messages
+  const handleAuthMessage = (message: string) => {
+    console.log('Auth message:', message);
+    
+    // Clear previous error
+    setAuthError(null);
 
-    // Parse error message if it's in JSON format
-    try {
-      if (typeof error.message === 'string' && error.message.includes('{')) {
-        const parsedError = JSON.parse(error.message);
-        if (parsedError.error_description) {
-          errorMessage = parsedError.error_description;
-        } else if (parsedError.msg) {
-          errorMessage = parsedError.msg;
-        }
-      }
-    } catch (e) {
-      console.error('Error parsing error message:', e);
+    if (message.includes('user_already_exists')) {
+      const errorMsg = "This email is already registered. Please sign in instead.";
+      setAuthError(errorMsg);
+      toast({
+        title: "Authentication Error",
+        description: errorMsg,
+        variant: "destructive",
+      });
+    } else if (message.includes('invalid_credentials')) {
+      const errorMsg = "Invalid email or password. Please check your credentials.";
+      setAuthError(errorMsg);
+      toast({
+        title: "Authentication Error",
+        description: errorMsg,
+        variant: "destructive",
+      });
     }
-
-    // Handle specific error codes
-    if (error.message?.includes('user_already_exists')) {
-      errorMessage = "This email is already registered. Please sign in instead.";
-    } else if (error.message?.includes('invalid_credentials')) {
-      errorMessage = "Invalid email or password. Please check your credentials.";
-    }
-
-    setAuthError(errorMessage);
-    toast({
-      title: "Authentication Error",
-      description: errorMessage,
-      variant: "destructive",
-    });
   };
 
   return (
@@ -170,7 +161,7 @@ export default function AuthPage() {
                     },
                   },
                 }}
-                onError={handleAuthError}
+                onMessage={handleAuthMessage}
               />
             </>
           )}
