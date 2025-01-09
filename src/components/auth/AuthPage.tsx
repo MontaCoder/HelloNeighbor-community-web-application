@@ -103,7 +103,7 @@ export default function AuthPage() {
                         brand: '#2F5233',
                         brandAccent: '#7C9082',
                       },
-                      borderRadii: {
+                      radii: {
                         button: '0.5rem',
                         input: '0.5rem',
                       },
