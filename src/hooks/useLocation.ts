@@ -82,7 +82,8 @@ export const useLocation = () => {
         description: "Welcome to your neighborhood!"
       });
 
-      navigate('/dashboard');
+      // Use window.location for a full page navigation instead of react-router navigate
+      window.location.href = '/dashboard';
       return true;
     } catch (error) {
       console.error('Error updating location:', error);
@@ -93,7 +94,7 @@ export const useLocation = () => {
       });
       return false;
     }
-  }, [user?.id, toast, navigate]);
+  }, [user?.id, toast]);
 
   const detectLocation = useCallback(async () => {
     setLoading(true);
