@@ -62,13 +62,59 @@ export default function AuthPage() {
     checkSession();
 
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'USER_DELETED') {
+        setAuthError("User account has been deleted.");
+      } else if (event === 'PASSWORD_RECOVERY') {
+        setAuthError(null);
+        toast({
+          title: "Password Recovery",
+          description: "Check your email for password reset instructions.",
+        });
+      } else {
+        handleAuthChange(event, session);
+      }
+    });
 
     // Cleanup subscription
     return () => {
       subscription.unsubscribe();
     };
   }, [navigate]);
+
+  // Handle auth errors
+  const handleAuthError = (error: any) => {
+    console.error('Auth error:', error);
+    let errorMessage = "An unexpected error occurred. Please try again.";
+
+    // Parse error message if it's in JSON format
+    try {
+      if (typeof error.message === 'string' && error.message.includes('{')) {
+        const parsedError = JSON.parse(error.message);
+        if (parsedError.error_description) {
+          errorMessage = parsedError.error_description;
+        } else if (parsedError.msg) {
+          errorMessage = parsedError.msg;
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing error message:', e);
+    }
+
+    // Handle specific error codes
+    if (error.message?.includes('user_already_exists')) {
+      errorMessage = "This email is already registered. Please sign in instead.";
+    } else if (error.message?.includes('invalid_credentials')) {
+      errorMessage = "Invalid email or password. Please check your credentials.";
+    }
+
+    setAuthError(errorMessage);
+    toast({
+      title: "Authentication Error",
+      description: errorMessage,
+      variant: "destructive",
+    });
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#FAF9F6] p-4 sm:p-6 md:p-8">
@@ -124,6 +170,7 @@ export default function AuthPage() {
                     },
                   },
                 }}
+                onError={handleAuthError}
               />
             </>
           )}
