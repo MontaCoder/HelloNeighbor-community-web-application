@@ -7,105 +7,103 @@ export function useEvents() {
   const { toast } = useToast();
   const { profile, user } = useAuth();
 
-  const { data: events, isLoading, refetch } = useQuery({
+  const { data: events = [], isLoading, refetch } = useQuery({
     queryKey: ["events-preview", profile?.neighborhood_id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("events")
         .select("*")
-        .eq('neighborhood_id', profile?.neighborhood_id)
-        .gte("start_time", new Date().toISOString())
+        .eq("neighborhood_id", profile?.neighborhood_id)
         .order("start_time", { ascending: true })
-        .limit(3);
-      
-      if (error) throw error;
-      return data;
+        .limit(5);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch events",
+          variant: "destructive",
+        });
+        throw error;
+      }
+
+      return data || [];
     },
-    enabled: !!profile?.neighborhood_id
+    enabled: !!profile?.neighborhood_id,
   });
 
   const handleDelete = async (eventId: string) => {
-    const { error } = await supabase
-      .from("events")
-      .delete()
-      .eq("id", eventId);
+    try {
+      const { error } = await supabase
+        .from("events")
+        .delete()
+        .eq("id", eventId)
+        .eq("created_by", user?.id);
 
-    if (error) {
+      if (error) throw error;
+
       toast({
-        title: "Error deleting event",
-        description: "Please try again later.",
-        variant: "destructive"
+        title: "Success",
+        description: "Event deleted successfully",
       });
-      return;
-    }
 
-    toast({
-      title: "Event deleted",
-      description: "The event has been removed successfully."
-    });
-    refetch();
+      refetch();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete event",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEdit = async (eventId: string, values: any) => {
     try {
       const { error } = await supabase
         .from("events")
-        .update({
-          title: values.title,
-          description: values.description,
-          location: values.location,
-          start_time: values.start_time,
-          end_time: values.end_time,
-          image_url: values.image_url,
-          neighborhood_id: profile?.neighborhood_id
-        })
-        .eq("id", eventId);
+        .update(values)
+        .eq("id", eventId)
+        .eq("created_by", user?.id);
 
       if (error) throw error;
 
       toast({
-        title: "Event updated",
-        description: "Your event has been updated successfully."
+        title: "Success",
+        description: "Event updated successfully",
       });
 
       refetch();
     } catch (error) {
       toast({
-        title: "Error updating event",
-        description: "Please try again later.",
-        variant: "destructive"
+        title: "Error",
+        description: "Failed to update event",
+        variant: "destructive",
       });
     }
   };
 
   const handleCreate = async (values: any) => {
     try {
-      const { error } = await supabase
-        .from("events")
-        .insert({
-          title: values.title,
-          description: values.description,
-          location: values.location,
-          start_time: values.start_time,
-          end_time: values.end_time,
-          image_url: values.image_url,
+      const { error } = await supabase.from("events").insert([
+        {
+          ...values,
           created_by: user?.id,
-          neighborhood_id: profile?.neighborhood_id
-        });
+          neighborhood_id: profile?.neighborhood_id,
+        },
+      ]);
 
       if (error) throw error;
 
       toast({
-        title: "Event created",
-        description: "Your event has been created successfully."
+        title: "Success",
+        description: "Event created successfully",
       });
 
       refetch();
     } catch (error) {
       toast({
-        title: "Error creating event",
-        description: "Please try again later.",
-        variant: "destructive"
+        title: "Error",
+        description: "Failed to create event",
+        variant: "destructive",
       });
     }
   };
@@ -115,6 +113,6 @@ export function useEvents() {
     isLoading,
     handleDelete,
     handleEdit,
-    handleCreate
+    handleCreate,
   };
 }
