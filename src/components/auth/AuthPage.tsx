@@ -88,16 +88,13 @@ export default function AuthPage() {
                 }
               }
             }}
-            options={{
-              emailRedirectTo: `${window.location.origin}/auth/callback`,
-              signUpFields: [
-                {
-                  name: 'full_name',
-                  required: true,
-                  type: 'text',
-                  label: 'Full Name',
-                }
-              ]
+            view="sign_in"
+            additionalData={{
+              full_name: {
+                required: true,
+                type: 'text',
+                label: 'Full Name',
+              }
             }}
           />
         </CardContent>
