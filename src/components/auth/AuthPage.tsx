@@ -104,8 +104,8 @@ export default function AuthPage() {
                         brandAccent: '#7C9082',
                       },
                       radii: {
-                        button: '0.5rem',
-                        input: '0.5rem',
+                        buttonBorderRadius: '0.5rem',
+                        inputBorderRadius: '0.5rem',
                       },
                     },
                   },
