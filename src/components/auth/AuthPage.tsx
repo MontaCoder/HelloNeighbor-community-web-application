@@ -76,12 +76,15 @@ export default function AuthPage() {
             providers={[]}
             localization={{
               variables: {
-                sign_up: {
-                  full_name_label: 'Full Name',
-                  full_name_placeholder: 'Enter your full name',
+                sign_in: {
                   email_label: 'Email',
                   password_label: 'Password',
-                  button_label: 'Sign Up',
+                  button_label: 'Sign In'
+                },
+                sign_up: {
+                  email_label: 'Email',
+                  password_label: 'Password',
+                  button_label: 'Sign Up'
                 }
               }
             }}
@@ -92,6 +95,7 @@ export default function AuthPage() {
                   name: 'full_name',
                   required: true,
                   type: 'text',
+                  label: 'Full Name',
                 }
               ]
             }}
