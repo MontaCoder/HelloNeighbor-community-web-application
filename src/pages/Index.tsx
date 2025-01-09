@@ -7,7 +7,7 @@ import { EventsPreview } from "@/components/dashboard/EventsPreview";
 import { LandingPage } from "@/components/landing/LandingPage";
 import { LocationDetector } from "@/components/location/LocationDetector";
 import { LocationMap } from "@/components/location/LocationMap";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 const Index = () => {
   const { user, loading, profile } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: neighborhood, isLoading: neighborhoodLoading } = useQuery({
     queryKey: ['neighborhood', profile?.neighborhood_id],
@@ -93,7 +94,7 @@ const Index = () => {
         filter: `neighborhood_id=eq.${profile.neighborhood_id}`
       }, () => {
         // Refetch events when changes occur
-        queryClient.invalidateQueries(["nearby-events"]);
+        queryClient.invalidateQueries({ queryKey: ["nearby-events"] });
       })
       .on('postgres_changes', {
         event: '*',
@@ -108,14 +109,14 @@ const Index = () => {
             description: "A new alert has been posted in your neighborhood",
           });
         }
-        queryClient.invalidateQueries(["nearby-alerts"]);
+        queryClient.invalidateQueries({ queryKey: ["nearby-alerts"] });
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile?.neighborhood_id]);
+  }, [profile?.neighborhood_id, queryClient, toast]);
 
   if (loading) return null;
 

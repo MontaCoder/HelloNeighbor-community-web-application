@@ -7,7 +7,7 @@ export function useEvents() {
   const { toast } = useToast();
   const { profile, user } = useAuth();
 
-  const { data: events, refetch } = useQuery({
+  const { data: events, isLoading, refetch } = useQuery({
     queryKey: ["events-preview", profile?.neighborhood_id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -112,6 +112,7 @@ export function useEvents() {
 
   return {
     events,
+    isLoading,
     handleDelete,
     handleEdit,
     handleCreate
