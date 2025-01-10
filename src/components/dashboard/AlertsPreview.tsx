@@ -1,6 +1,6 @@
-import { Bell, Plus } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCard } from "./AlertCard";
@@ -8,13 +8,11 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEffect } from "react";
 
 export function AlertsPreview() {
   const { toast } = useToast();
   const { profile } = useAuth();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const { data: alerts, isLoading, refetch } = useQuery({
     queryKey: ["alerts-preview", profile?.neighborhood_id],
@@ -31,25 +29,6 @@ export function AlertsPreview() {
     },
     enabled: !!profile?.neighborhood_id
   });
-
-  useEffect(() => {
-    if (!profile?.neighborhood_id) return;
-
-    const channel = supabase.channel('alerts-preview')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'alerts',
-        filter: `neighborhood_id=eq.${profile.neighborhood_id}`
-      }, () => {
-        refetch();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [profile?.neighborhood_id]);
 
   const handleDelete = async (alertId: string) => {
     const { error } = await supabase
@@ -104,7 +83,7 @@ export function AlertsPreview() {
   };
 
   return (
-    <Card className="animate-fade-in">
+    <Card className="animate-fade-in h-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-lg font-bold">Recent Alerts</CardTitle>
         <div className="flex items-center gap-2">
@@ -113,6 +92,7 @@ export function AlertsPreview() {
             variant="outline" 
             size="sm"
             onClick={() => navigate('/alerts')}
+            className="hidden sm:flex"
           >
             View All
           </Button>

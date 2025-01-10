@@ -34,24 +34,24 @@ export function AlertCard({ alert, onDelete, onEdit }: AlertCardProps) {
           : "bg-blue-100"
       }`}
     >
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="font-semibold">{alert.title}</h3>
-          <p className="text-sm text-gray-600">{alert.message}</p>
+      <div className="flex justify-between items-start gap-4">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-sm sm:text-base truncate">{alert.title}</h3>
+          <p className="text-xs sm:text-sm text-gray-600 line-clamp-2">{alert.message}</p>
         </div>
         {user && alert.created_by === user.id && (
-          <div className="flex gap-2">
+          <div className="flex gap-1 sm:gap-2 flex-shrink-0">
             <Dialog>
               <DialogTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="hover:bg-gray-200"
+                  className="h-8 w-8 hover:bg-gray-200"
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>Edit Alert</DialogTitle>
                 </DialogHeader>
@@ -132,7 +132,7 @@ export function AlertCard({ alert, onDelete, onEdit }: AlertCardProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="hover:bg-gray-200"
+              className="h-8 w-8 hover:bg-gray-200"
               onClick={() => onDelete(alert.id)}
             >
               <Trash2 className="h-4 w-4" />
