@@ -5,7 +5,7 @@ export const Footer = () => {
   const navigate = useNavigate();
   
   return (
-    <footer className="bg-primary text-white py-16">
+    <footer className="footer-section">
       <div className="max-w-7xl mx-auto px-4 grid md:grid-cols-4 gap-8">
         <div>
           <h3 className="font-bold text-xl mb-4">Stay Connected with Your Community</h3>
@@ -13,12 +13,12 @@ export const Footer = () => {
           <div className="flex gap-4">
             <Button 
               variant="outline" 
-              className="border-white text-white hover:bg-white hover:text-primary"
+              className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary"
             >
               Learn More
             </Button>
             <Button 
-              className="bg-white text-primary hover:bg-white/90"
+              className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
               onClick={() => navigate("/auth?mode=sign-up")}
             >
               Sign Up
@@ -45,7 +45,7 @@ export const Footer = () => {
         </div>
         <div>
           <h4 className="font-bold mb-4">Follow Us</h4>
-          <ul className="space-y-2">
+          <ul className="space-y-2 social-links">
             <li><a href="#" className="hover:underline">Facebook</a></li>
             <li><a href="#" className="hover:underline">Twitter</a></li>
             <li><a href="#" className="hover:underline">Instagram</a></li>
@@ -53,7 +53,7 @@ export const Footer = () => {
           </ul>
         </div>
       </div>
-      <div className="max-w-7xl mx-auto px-4 mt-16 pt-8 border-t border-white/20">
+      <div className="max-w-7xl mx-auto px-4 mt-16 pt-8 border-t border-primary-foreground/20">
         <div className="flex justify-between items-center">
           <p>&copy; 2024 Hello! Neighbour. All rights reserved.</p>
           <div className="flex gap-4">

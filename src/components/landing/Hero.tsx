@@ -6,7 +6,7 @@ export const Hero = () => {
   
   return (
     <div 
-      className="relative h-[600px] flex items-center justify-center"
+      className="relative h-[600px] flex items-center justify-center hero-section"
       style={{
         backgroundImage: "url('/imgs/hood.png')",
         backgroundSize: "cover",
