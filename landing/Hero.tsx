@@ -8,31 +8,30 @@ export const Hero = () => {
     <div 
       className="relative min-h-screen flex items-center justify-center bg-fixed bg-cover bg-center"
       style={{
-        backgroundImage: "url('/imgs/hood.png')" 
+        backgroundImage: "url('/lovable-uploads/hood.png')" // Make sure to place your image in the public folder
       }}
     >
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/40" />
       <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4 mt-16">
-        <h2 className="text-5xl md:text-6xl font-bold mb-6 md:mb-8 animate-fade-in">
+        <h2 className="text-6xl font-bold mb-8 animate-fade-in">
           Welcome to Your Smart Neighborhood Experience
         </h2>
-        <p className="text-xl md:text-2xl mb-10 md:mb-12 leading-relaxed opacity-90">
+        <p className="text-2xl mb-12 leading-relaxed opacity-90">
           Join our community platform designed to bring neighbors together, 
           facilitate communication, and create a stronger, more connected neighborhood.
         </p>
-        <div className="flex flex-col md:flex-row gap-4 md:gap-6 justify-center">
+        <div className="flex gap-6 justify-center">
           <Button 
-            variant="outline" 
             size="lg"
-            className="w-full md:w-auto"
+            variant="outline"
+            className="text-lg px-8 py-6 bg-white/10 backdrop-blur-sm border-white text-white hover:bg-white hover:text-black transition-all duration-300"
             onClick={() => navigate("/auth?mode=sign-in")}
           >
             Learn More
           </Button>
           <Button 
-            variant="default" 
             size="lg"
-            className="w-full md:w-auto"
+            className="text-lg px-8 py-6 bg-primary hover:bg-primary/90 transition-all duration-300"
             onClick={() => navigate("/auth?mode=sign-up")}
           >
             Sign Up Now

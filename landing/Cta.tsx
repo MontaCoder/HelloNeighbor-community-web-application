@@ -12,19 +12,16 @@ export const Cta = () => {
         <div className="flex gap-4 justify-center">
           <Button 
             variant="outline" 
-            size="lg"
-            className="w-full md:w-auto"
+            className="border-white text-white hover:bg-white hover:text-black"
             onClick={() => navigate("/auth?mode=sign-in")}
           >
             Learn More
           </Button>
           <Button 
-            variant="default" 
-            size="lg"
-            className="w-full md:w-auto"
+            className="bg-primary hover:bg-primary/90"
             onClick={() => navigate("/auth?mode=sign-up")}
           >
-            Sign Up Now
+            Sign Up
           </Button>
         </div>
       </div>

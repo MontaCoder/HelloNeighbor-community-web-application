@@ -37,8 +37,8 @@ export const Stats = () => {
             }`}
             style={{ transitionDelay: `${index * 100}ms` }}
           >
-            <div className="text-4xl md:text-5xl font-bold mb-3">{stat.value}</div>
-            <div className="text-md md:text-lg opacity-90">{stat.label}</div>
+            <div className="text-5xl font-bold mb-3">{stat.value}</div>
+            <div className="text-lg opacity-90">{stat.label}</div>
           </div>
         ))}
       </div>

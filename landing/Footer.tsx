@@ -13,15 +13,12 @@ export const Footer = () => {
           <div className="flex gap-4">
             <Button 
               variant="outline" 
-              size="default"
-              className="bg-white text-primary hover:bg-primary hover:text-white border-white transition-all duration-300"
+              className="border-white text-white hover:bg-white hover:text-primary"
             >
               Learn More
             </Button>
             <Button 
-              variant="default" 
-              size="default"
-              className="bg-white text-primary hover:bg-primary-light hover:text-white transition-all duration-300"
+              className="bg-white text-primary hover:bg-white/90"
               onClick={() => navigate("/auth?mode=sign-up")}
             >
               Sign Up
