@@ -21,11 +21,15 @@ export function ActiveUsersSidebar() {
   const { profile } = useAuth();
 
   useEffect(() => {
-    // Subscribe to presence changes
-    const channel = supabase.channel('online-users')
+    if (!profile?.neighborhood_id) return;
+
+    // Subscribe to presence changes for specific neighborhood
+    const channel = supabase.channel(`online-users-${profile.neighborhood_id}`)
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
-        const onlineUsers = Object.values(state).flat() as any[];
+        const onlineUsers = Object.values(state)
+          .flat()
+          .filter((presence: any) => presence.neighborhood_id === profile.neighborhood_id) as any[];
         updateUsers(onlineUsers);
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {
@@ -39,7 +43,9 @@ export function ActiveUsersSidebar() {
         
         const userStatus = {
           online_at: new Date().toISOString(),
-          status: 'online'
+          status: 'online',
+          user_id: profile.id,
+          neighborhood_id: profile.neighborhood_id
         };
         
         await channel.track(userStatus);
@@ -56,11 +62,17 @@ export function ActiveUsersSidebar() {
   const fetchUsers = async () => {
     if (!profile?.neighborhood_id) return;
 
-    const { data: profiles } = await supabase
+    const { data: profiles, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('neighborhood_id', profile.neighborhood_id)
+      .not('id', 'eq', profile.id) // Exclude current user
       .order('full_name');
+    
+    if (error) {
+      console.error('Error fetching users:', error);
+      return;
+    }
     
     if (profiles) {
       const transformedUsers: User[] = profiles.map(profile => ({
@@ -78,7 +90,10 @@ export function ActiveUsersSidebar() {
     setUsers(currentUsers => 
       currentUsers.map(user => ({
         ...user,
-        status: presenceState.find(p => p.user_id === user.id) ? 'online' : 'offline'
+        status: presenceState.find(p => 
+          p.user_id === user.id && 
+          p.neighborhood_id === profile?.neighborhood_id
+        ) ? 'online' : 'offline'
       }))
     );
   };

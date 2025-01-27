@@ -157,8 +157,15 @@ ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS Policies
 -- Profiles Policies
-CREATE POLICY "Enable read access for authenticated users" ON public.profiles
-    FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Enable read access for authenticated users" ON public.profiles;
+CREATE POLICY "profiles_select_policy" ON public.profiles
+    FOR SELECT TO authenticated USING (
+        EXISTS (
+            SELECT 1 FROM profiles viewer
+            WHERE viewer.id = auth.uid()
+            AND viewer.neighborhood_id = profiles.neighborhood_id
+        )
+    );
 
 CREATE POLICY "Users can update their own profile" ON public.profiles
     FOR UPDATE TO authenticated USING (auth.uid() = id);
@@ -224,17 +231,27 @@ CREATE POLICY "marketplace_items_delete_policy" ON public.marketplace_items
     FOR DELETE TO authenticated USING (auth.uid() = created_by);
 
 -- Messages Policies
+DROP POLICY IF EXISTS "messages_select_policy" ON public.messages;
 CREATE POLICY "messages_select_policy" ON public.messages
     FOR SELECT TO authenticated USING (
-        (neighborhood_id IS NOT NULL AND auth.uid() IN (
-            SELECT profiles.id FROM profiles 
-            WHERE profiles.neighborhood_id = messages.neighborhood_id
-        )) OR 
-        (receiver_id IS NOT NULL AND (auth.uid() = sender_id OR auth.uid() = receiver_id))
+        EXISTS (
+            SELECT 1 FROM profiles viewer
+            WHERE viewer.id = auth.uid()
+            AND viewer.neighborhood_id = messages.neighborhood_id
+        )
+        OR 
+        (auth.uid() = sender_id OR auth.uid() = receiver_id)
     );
 
+DROP POLICY IF EXISTS "messages_insert_policy" ON public.messages;
 CREATE POLICY "messages_insert_policy" ON public.messages
-    FOR INSERT TO authenticated WITH CHECK (true);
+    FOR INSERT TO authenticated WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM profiles sender
+            WHERE sender.id = auth.uid()
+            AND sender.neighborhood_id = neighborhood_id
+        )
+    );
 
 CREATE POLICY "messages_update_policy" ON public.messages
     FOR UPDATE TO authenticated USING (auth.uid() = sender_id);
