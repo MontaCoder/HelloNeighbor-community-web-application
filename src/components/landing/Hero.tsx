@@ -8,7 +8,7 @@ export const Hero = () => {
     <div 
       className="relative h-[600px] flex items-center justify-center"
       style={{
-        backgroundImage: "url('/lovable-uploads/3c81abf5-3723-43a2-ab93-b842264d83e8.png')",
+        backgroundImage: "url('/imgs/hood.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
