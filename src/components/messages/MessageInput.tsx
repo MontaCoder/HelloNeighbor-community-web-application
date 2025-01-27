@@ -44,8 +44,8 @@ export function MessageInput({ onSendMessage }: MessageInputProps) {
             />
             <Button
               type="button"
-              variant="destructive"
-              size="icon"
+              variant="outline"
+              size="sm"
               className="absolute top-1 right-1"
               onClick={() => setImageUrl("")}
             >
@@ -68,7 +68,7 @@ export function MessageInput({ onSendMessage }: MessageInputProps) {
           <Button
             type="button"
             variant="outline"
-            size="icon"
+            size="sm"
             disabled={isUploading}
           >
             <ImagePlus className="h-4 w-4" />

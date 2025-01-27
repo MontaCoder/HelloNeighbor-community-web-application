@@ -105,8 +105,8 @@ export function MessageItem({ message, currentUserId, onMessageUpdate }: Message
               <div className="flex gap-2 mt-2 justify-end">
                 <Dialog open={isEditing} onOpenChange={setIsEditing}>
                   <Button
-                    variant="ghost"
-                    size="icon"
+                    variant="outline"
+                    size="sm"
                     onClick={() => setIsEditing(true)}
                   >
                     <Pencil className="h-4 w-4" />
@@ -134,8 +134,8 @@ export function MessageItem({ message, currentUserId, onMessageUpdate }: Message
                   </DialogContent>
                 </Dialog>
                 <Button
-                  variant="ghost"
-                  size="icon"
+                  variant="outline"
+                  size="sm"
                   onClick={handleDelete}
                 >
                   <Trash2 className="h-4 w-4" />
