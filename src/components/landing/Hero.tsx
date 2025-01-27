@@ -24,7 +24,7 @@ export const Hero = () => {
           <Button 
             variant="outline" 
             size="lg"
-            className="w-full md:w-auto"
+            className="w-full md:w-auto bg-white text-primary hover:bg-primary hover:text-white border-2 border-white transition-all duration-300"
             onClick={() => navigate("/auth?mode=sign-in")}
           >
             Learn More
