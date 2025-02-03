@@ -1,4 +1,6 @@
 import { Home, Bell, Calendar, ShoppingBag, MessageSquare, Users, Settings } from "lucide-react";
+import { NavLink } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Sidebar,
   SidebarContent,
@@ -20,7 +22,9 @@ const menuItems = [
   { title: "Settings", icon: Settings, path: "/settings" },
 ];
 
-export function AppSidebar() {
+export function AppSidebar({ isSidebarOpen, setIsSidebarOpen }) {
+  const isMobile = useIsMobile();
+
   return (
     <Sidebar>
       <SidebarContent>
@@ -31,10 +35,10 @@ export function AppSidebar() {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.path} className="flex items-center gap-3 px-3 py-2">
+                    <NavLink to={item.path} className="flex items-center gap-3 px-3 py-2">
                       <item.icon className="h-5 w-5" />
                       <span>{item.title}</span>
-                    </a>
+                    </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -42,6 +46,14 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      {isMobile && (
+        <button
+          className="fixed bottom-4 right-4 z-50 p-2 bg-primary text-white rounded-full shadow-lg"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        >
+          {isSidebarOpen ? "Close" : "Menu"}
+        </button>
+      )}
     </Sidebar>
   );
 }

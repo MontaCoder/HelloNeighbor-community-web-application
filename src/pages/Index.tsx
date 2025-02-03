@@ -12,13 +12,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const { user, loading, profile } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const { data: neighborhood, isLoading: neighborhoodLoading } = useQuery({
     queryKey: ['neighborhood', profile?.neighborhood_id],
@@ -125,7 +126,7 @@ const Index = () => {
     return (
       <SidebarProvider>
         <div className="min-h-screen flex w-full bg-[#FAF9F6]">
-          <AppSidebar />
+          <AppSidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
           <main className="flex-1 p-6 overflow-auto">
             <div className="max-w-7xl mx-auto space-y-8">
               <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
