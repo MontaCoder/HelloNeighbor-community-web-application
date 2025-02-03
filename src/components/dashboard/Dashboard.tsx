@@ -10,15 +10,19 @@ import { MapPin, ArrowRight, Bell, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { SidebarContent } from "@/components/ui/sidebar";
 
 export function Dashboard() {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-[#FAF9F6]">
         <AppSidebar />
+        {isMobile && <SidebarContent />}
         <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">
           <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
             {/* Welcome Section */}

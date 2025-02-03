@@ -9,10 +9,13 @@ import { useToast } from "@/hooks/use-toast";
 import { MessageItem } from "@/components/messages/MessageItem";
 import { MessageInput } from "@/components/messages/MessageInput";
 import { ActiveUsersSidebar } from "@/components/messages/ActiveUsersSidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { SidebarContent } from "@/components/ui/sidebar";
 
 export default function Messages() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const { data: messages, refetch } = useQuery({
     queryKey: ["public-messages", profile?.neighborhood_id],
@@ -87,6 +90,7 @@ export default function Messages() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-[#FAF9F6]">
         <AppSidebar />
+        {isMobile && <SidebarContent />}
         <main className="flex-1 flex">
           <div className="flex-1 p-6">
             <div className="max-w-4xl mx-auto">

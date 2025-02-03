@@ -11,6 +11,8 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { SidebarContent } from "@/components/ui/sidebar";
 
 export default function Neighbors() {
   const { user, profile } = useAuth();
@@ -19,6 +21,7 @@ export default function Neighbors() {
   const [messageContent, setMessageContent] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   const { data: neighbors, isLoading } = useQuery({
     queryKey: ["neighbors", profile?.neighborhood_id],
@@ -113,6 +116,7 @@ export default function Neighbors() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-[#FAF9F6]">
         <AppSidebar />
+        {isMobile && <SidebarContent />}
         <main className="flex-1 p-6">
           <div className="max-w-6xl mx-auto">
             <h1 className="text-3xl font-bold text-primary mb-6">Your Neighbors</h1>

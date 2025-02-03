@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { ImageUpload } from "@/components/shared/ImageUpload";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { SidebarContent } from "@/components/ui/sidebar";
 
 export default function Settings() {
   const { profile, user } = useAuth();
@@ -65,10 +67,13 @@ export default function Settings() {
     await supabase.auth.signOut();
   };
 
+  const isMobile = useIsMobile();
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-[#FAF9F6]">
         <AppSidebar />
+        {isMobile && <SidebarContent />}
         <main className="flex-1 p-6">
           <div className="max-w-2xl mx-auto">
             <h1 className="text-3xl font-bold text-primary mb-6">Settings</h1>

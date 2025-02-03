@@ -6,14 +6,18 @@ import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { ExchangeForm } from "@/components/exchange/ExchangeForm";
 import { ExchangeCard } from "@/components/exchange/ExchangeCard";
 import { useExchange } from "@/components/exchange/useExchange";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { SidebarContent } from "@/components/ui/sidebar";
 
 export default function Exchange() {
   const { items, handleDelete, handleCreate, handleEdit } = useExchange();
+  const isMobile = useIsMobile();
 
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-[#FAF9F6]">
         <AppSidebar />
+        {isMobile && <SidebarContent />}
         <main className="flex-1 p-6">
           <div className="max-w-6xl mx-auto">
             <div className="flex justify-between items-center mb-6">

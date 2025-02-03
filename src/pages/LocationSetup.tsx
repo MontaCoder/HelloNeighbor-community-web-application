@@ -11,6 +11,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useLocation } from "@/hooks/useLocation";
 import { Button } from "@/components/ui/button";
 import { LocationDetector } from "@/components/location/LocationDetector";
+import { SidebarProvider, SidebarContent } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/layout/AppSidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function LocationSetup() {
   const { toast } = useToast();
@@ -19,6 +22,7 @@ export default function LocationSetup() {
   const { detectLocation, loading: locationLoading } = useLocation();
   const [noAccess, setNoAccess] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
+  const isMobile = useIsMobile();
 
   console.log("LocationSetup rendering, user:", user); // Debug log
 
@@ -121,73 +125,81 @@ export default function LocationSetup() {
   if (isAdmin) return null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FAF9F6] p-4">
-      <Card className="w-full max-w-2xl">
-        <CardHeader className="text-center">
-          <CardTitle className="flex items-center justify-center gap-2 text-2xl text-primary">
-            <MapPin className="h-6 w-6" />
-            Location Verification
-          </CardTitle>
-          <CardDescription>
-            We need to verify your location to provide neighborhood access
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {noAccess ? (
-            <>
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Access Denied</AlertTitle>
-                <AlertDescription>
-                  Sorry, we couldn't verify your location within any of our registered neighborhoods. 
-                  This app is currently only available to residents within specific neighborhoods.
-                </AlertDescription>
-              </Alert>
-              <Button 
-                onClick={handleRetryLocation}
-                className="w-full"
-                disabled={locationLoading}
-              >
-                {locationLoading ? (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-[#FAF9F6]">
+        <AppSidebar />
+        {isMobile && <SidebarContent />}
+        <main className="flex-1 p-4">
+          <div className="min-h-screen flex items-center justify-center bg-[#FAF9F6] p-4">
+            <Card className="w-full max-w-2xl">
+              <CardHeader className="text-center">
+                <CardTitle className="flex items-center justify-center gap-2 text-2xl text-primary">
+                  <MapPin className="h-6 w-6" />
+                  Location Verification
+                </CardTitle>
+                <CardDescription>
+                  We need to verify your location to provide neighborhood access
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {noAccess ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Retrying...
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Access Denied</AlertTitle>
+                      <AlertDescription>
+                        Sorry, we couldn't verify your location within any of our registered neighborhoods. 
+                        This app is currently only available to residents within specific neighborhoods.
+                      </AlertDescription>
+                    </Alert>
+                    <Button 
+                      onClick={handleRetryLocation}
+                      className="w-full"
+                      disabled={locationLoading}
+                    >
+                      {locationLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Retrying...
+                        </>
+                      ) : (
+                        'Retry Location Detection'
+                      )}
+                    </Button>
+                    {debugInfo && (
+                      <Alert>
+                        <AlertTitle>Debug Information</AlertTitle>
+                        <AlertDescription>
+                          <pre className="mt-2 w-full overflow-auto text-xs">
+                            {JSON.stringify(debugInfo, null, 2)}
+                          </pre>
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </>
                 ) : (
-                  'Retry Location Detection'
-                )}
-              </Button>
-              {debugInfo && (
-                <Alert>
-                  <AlertTitle>Debug Information</AlertTitle>
-                  <AlertDescription>
-                    <pre className="mt-2 w-full overflow-auto text-xs">
-                      {JSON.stringify(debugInfo, null, 2)}
-                    </pre>
-                  </AlertDescription>
-                </Alert>
-              )}
-            </>
-          ) : (
-            <div className="space-y-4">
-              <div className="text-center">
-                {locationLoading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <p>Detecting your location...</p>
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      {locationLoading ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <p>Detecting your location...</p>
+                        </div>
+                      ) : (
+                        <p>Please wait while we verify your location...</p>
+                      )}
+                    </div>
+                    <LocationDetector />
+                    <div className="mt-6">
+                      <LocationMap />
+                    </div>
                   </div>
-                ) : (
-                  <p>Please wait while we verify your location...</p>
                 )}
-              </div>
-              <LocationDetector />
-              <div className="mt-6">
-                <LocationMap />
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    </SidebarProvider>
   );
 }
