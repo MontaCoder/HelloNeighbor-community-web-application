@@ -70,6 +70,7 @@ export function AlertForm({ onSuccess }: AlertFormProps) {
               id="title"
               {...form.register("title")}
               placeholder="Alert title"
+              aria-label="Alert title"
             />
           </div>
 
@@ -79,6 +80,7 @@ export function AlertForm({ onSuccess }: AlertFormProps) {
               id="message"
               {...form.register("message")}
               placeholder="Alert message"
+              aria-label="Alert message"
             />
           </div>
 
@@ -88,6 +90,7 @@ export function AlertForm({ onSuccess }: AlertFormProps) {
               <Select
                 onValueChange={(value) => form.setValue("type", value)}
                 defaultValue={form.getValues("type")}
+                aria-label="Alert type"
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select type" />
@@ -106,6 +109,7 @@ export function AlertForm({ onSuccess }: AlertFormProps) {
               <Select
                 onValueChange={(value) => form.setValue("urgency", value)}
                 defaultValue={form.getValues("urgency")}
+                aria-label="Alert urgency"
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select urgency" />

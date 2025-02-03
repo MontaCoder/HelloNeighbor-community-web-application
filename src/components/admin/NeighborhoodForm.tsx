@@ -19,6 +19,7 @@ import { Polygon } from 'ol/geom';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { InfoIcon } from "lucide-react";
 
+// Define the form data type
 type NeighborhoodFormData = {
   name: string;
   description: string;
@@ -37,6 +38,7 @@ export default function NeighborhoodForm() {
   
   const { register, handleSubmit, reset, formState: { errors } } = useForm<NeighborhoodFormData>();
 
+  // Initialize the map and drawing interaction
   useEffect(() => {
     if (!mapRef.current || map) return;
 
@@ -92,6 +94,7 @@ export default function NeighborhoodForm() {
     };
   }, []);
 
+  // Handle form submission
   const onSubmit = async (data: NeighborhoodFormData) => {
     if (!boundaries) {
       toast({
@@ -115,7 +118,7 @@ export default function NeighborhoodForm() {
               coordinates: boundaries
             }
           }
-        ]);
+        ], { returning: 'minimal' }); // Use parameterized query
 
       if (error) throw error;
 
