@@ -1,13 +1,22 @@
--- Database Schema Backup
+-- Database Schema Backup (FIXED)
 -- Generated on: 2024-03-19
+-- Fixed on: 2026-04-13
 
--- Enable UUID extension if not already enabled
+-- ============================================
+-- ESSENTIAL EXTENSIONS
+-- ============================================
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS postgis;  -- REQUIRED for find_neighborhood function
 
--- Create custom types
+-- ============================================
+-- CUSTOM TYPES
+-- ============================================
 CREATE TYPE user_role AS ENUM ('admin', 'user');
 
--- Create Tables
+-- ============================================
+-- TABLES
+-- ============================================
+
 CREATE TABLE IF NOT EXISTS public.neighborhoods (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name text NOT NULL,
@@ -114,38 +123,44 @@ CREATE TABLE IF NOT EXISTS public.user_roles (
     CONSTRAINT user_roles_pkey PRIMARY KEY (id)
 );
 
--- Add Foreign Key Constraints
+-- ============================================
+-- FOREIGN KEY CONSTRAINTS
+-- ============================================
+
 ALTER TABLE public.profiles
-    ADD CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
+    ADD CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE,
     ADD CONSTRAINT profiles_neighborhood_id_fkey FOREIGN KEY (neighborhood_id) REFERENCES neighborhoods(id);
 
 ALTER TABLE public.events
-    ADD CONSTRAINT events_created_by_fkey FOREIGN KEY (created_by) REFERENCES profiles(id),
-    ADD CONSTRAINT events_neighborhood_id_fkey FOREIGN KEY (neighborhood_id) REFERENCES neighborhoods(id);
+    ADD CONSTRAINT events_created_by_fkey FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE SET NULL,
+    ADD CONSTRAINT events_neighborhood_id_fkey FOREIGN KEY (neighborhood_id) REFERENCES neighborhoods(id) ON DELETE SET NULL;
 
 ALTER TABLE public.alerts
-    ADD CONSTRAINT alerts_created_by_fkey FOREIGN KEY (created_by) REFERENCES profiles(id),
-    ADD CONSTRAINT alerts_neighborhood_id_fkey FOREIGN KEY (neighborhood_id) REFERENCES neighborhoods(id);
+    ADD CONSTRAINT alerts_created_by_fkey FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE SET NULL,
+    ADD CONSTRAINT alerts_neighborhood_id_fkey FOREIGN KEY (neighborhood_id) REFERENCES neighborhoods(id) ON DELETE SET NULL;
 
 ALTER TABLE public.marketplace_items
-    ADD CONSTRAINT marketplace_items_created_by_fkey FOREIGN KEY (created_by) REFERENCES profiles(id),
-    ADD CONSTRAINT marketplace_items_neighborhood_id_fkey FOREIGN KEY (neighborhood_id) REFERENCES neighborhoods(id);
+    ADD CONSTRAINT marketplace_items_created_by_fkey FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE SET NULL,
+    ADD CONSTRAINT marketplace_items_neighborhood_id_fkey FOREIGN KEY (neighborhood_id) REFERENCES neighborhoods(id) ON DELETE SET NULL;
 
 ALTER TABLE public.messages
-    ADD CONSTRAINT messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES profiles(id),
-    ADD CONSTRAINT messages_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES profiles(id),
-    ADD CONSTRAINT messages_neighborhood_id_fkey FOREIGN KEY (neighborhood_id) REFERENCES neighborhoods(id);
+    ADD CONSTRAINT messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES profiles(id) ON DELETE SET NULL,
+    ADD CONSTRAINT messages_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES profiles(id) ON DELETE SET NULL,
+    ADD CONSTRAINT messages_neighborhood_id_fkey FOREIGN KEY (neighborhood_id) REFERENCES neighborhoods(id) ON DELETE SET NULL;
 
 ALTER TABLE public.notifications
-    ADD CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles(id);
+    ADD CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE;
 
 ALTER TABLE public.user_roles
-    ADD CONSTRAINT user_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id);
+    ADD CONSTRAINT user_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
 ALTER TABLE public.neighborhoods
-    ADD CONSTRAINT neighborhoods_created_by_fkey FOREIGN KEY (created_by) REFERENCES profiles(id);
+    ADD CONSTRAINT neighborhoods_created_by_fkey FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE SET NULL;
 
--- Enable Row Level Security
+-- ============================================
+-- ROW LEVEL SECURITY
+-- ============================================
+
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.alerts ENABLE ROW LEVEL SECURITY;
@@ -155,78 +170,84 @@ ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.neighborhoods ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 
--- Create RLS Policies
+-- ============================================
+-- RLS POLICIES
+-- ============================================
+
 -- Profiles Policies
-DROP POLICY IF EXISTS "Enable read access for authenticated users" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_select_policy" ON public.profiles;
 CREATE POLICY "profiles_select_policy" ON public.profiles
     FOR SELECT TO authenticated USING (
-        EXISTS (
-            SELECT 1 FROM profiles viewer
-            WHERE viewer.id = auth.uid()
-            AND viewer.neighborhood_id = profiles.neighborhood_id
-        )
+        id = auth.uid()
+        OR neighborhood_id = public.get_current_user_neighborhood_id()
     );
 
-CREATE POLICY "Users can update their own profile" ON public.profiles
+DROP POLICY IF EXISTS "profiles_update_own_policy" ON public.profiles;
+CREATE POLICY "profiles_update_own_policy" ON public.profiles
     FOR UPDATE TO authenticated USING (auth.uid() = id);
 
-CREATE POLICY "Enable insert for authenticated users" ON public.profiles
+DROP POLICY IF EXISTS "profiles_insert_policy" ON public.profiles;
+CREATE POLICY "profiles_insert_policy" ON public.profiles
     FOR INSERT TO authenticated WITH CHECK (true);
 
-CREATE POLICY "Enable delete for users" ON public.profiles
+DROP POLICY IF EXISTS "profiles_delete_own_policy" ON public.profiles;
+CREATE POLICY "profiles_delete_own_policy" ON public.profiles
     FOR DELETE TO authenticated USING (auth.uid() = id);
 
 -- Events Policies
+DROP POLICY IF EXISTS "events_select_policy" ON public.events;
 CREATE POLICY "events_select_policy" ON public.events
     FOR SELECT TO authenticated USING (
-        auth.uid() IN (
-            SELECT profiles.id FROM profiles 
-            WHERE profiles.neighborhood_id = events.neighborhood_id
-        )
+        neighborhood_id = public.get_current_user_neighborhood_id()
     );
 
+DROP POLICY IF EXISTS "events_insert_policy" ON public.events;
 CREATE POLICY "events_insert_policy" ON public.events
     FOR INSERT TO authenticated WITH CHECK (true);
 
+DROP POLICY IF EXISTS "events_update_policy" ON public.events;
 CREATE POLICY "events_update_policy" ON public.events
     FOR UPDATE TO authenticated USING (auth.uid() = created_by);
 
+DROP POLICY IF EXISTS "events_delete_policy" ON public.events;
 CREATE POLICY "events_delete_policy" ON public.events
     FOR DELETE TO authenticated USING (auth.uid() = created_by);
 
 -- Alerts Policies
+DROP POLICY IF EXISTS "alerts_select_policy" ON public.alerts;
 CREATE POLICY "alerts_select_policy" ON public.alerts
     FOR SELECT TO authenticated USING (
-        auth.uid() IN (
-            SELECT profiles.id FROM profiles 
-            WHERE profiles.neighborhood_id = alerts.neighborhood_id
-        )
+        neighborhood_id = public.get_current_user_neighborhood_id()
     );
 
+DROP POLICY IF EXISTS "alerts_insert_policy" ON public.alerts;
 CREATE POLICY "alerts_insert_policy" ON public.alerts
     FOR INSERT TO authenticated WITH CHECK (true);
 
+DROP POLICY IF EXISTS "alerts_update_policy" ON public.alerts;
 CREATE POLICY "alerts_update_policy" ON public.alerts
     FOR UPDATE TO authenticated USING (auth.uid() = created_by);
 
+DROP POLICY IF EXISTS "alerts_delete_policy" ON public.alerts;
 CREATE POLICY "alerts_delete_policy" ON public.alerts
     FOR DELETE TO authenticated USING (auth.uid() = created_by);
 
 -- Marketplace Items Policies
+DROP POLICY IF EXISTS "marketplace_items_select_policy" ON public.marketplace_items;
 CREATE POLICY "marketplace_items_select_policy" ON public.marketplace_items
     FOR SELECT TO authenticated USING (
-        auth.uid() IN (
-            SELECT profiles.id FROM profiles 
-            WHERE profiles.neighborhood_id = marketplace_items.neighborhood_id
-        )
+        neighborhood_id = public.get_current_user_neighborhood_id()
     );
 
+DROP POLICY IF EXISTS "marketplace_items_insert_policy" ON public.marketplace_items;
 CREATE POLICY "marketplace_items_insert_policy" ON public.marketplace_items
     FOR INSERT TO authenticated WITH CHECK (true);
 
+DROP POLICY IF EXISTS "marketplace_items_update_policy" ON public.marketplace_items;
 CREATE POLICY "marketplace_items_update_policy" ON public.marketplace_items
     FOR UPDATE TO authenticated USING (auth.uid() = created_by);
 
+DROP POLICY IF EXISTS "marketplace_items_delete_policy" ON public.marketplace_items;
 CREATE POLICY "marketplace_items_delete_policy" ON public.marketplace_items
     FOR DELETE TO authenticated USING (auth.uid() = created_by);
 
@@ -234,13 +255,9 @@ CREATE POLICY "marketplace_items_delete_policy" ON public.marketplace_items
 DROP POLICY IF EXISTS "messages_select_policy" ON public.messages;
 CREATE POLICY "messages_select_policy" ON public.messages
     FOR SELECT TO authenticated USING (
-        EXISTS (
-            SELECT 1 FROM profiles viewer
-            WHERE viewer.id = auth.uid()
-            AND viewer.neighborhood_id = messages.neighborhood_id
-        )
-        OR 
-        (auth.uid() = sender_id OR auth.uid() = receiver_id)
+        auth.uid() = sender_id
+        OR auth.uid() = receiver_id
+        OR (receiver_id IS NULL AND neighborhood_id = public.get_current_user_neighborhood_id())
     );
 
 DROP POLICY IF EXISTS "messages_insert_policy" ON public.messages;
@@ -253,70 +270,108 @@ CREATE POLICY "messages_insert_policy" ON public.messages
         )
     );
 
+DROP POLICY IF EXISTS "messages_update_policy" ON public.messages;
 CREATE POLICY "messages_update_policy" ON public.messages
     FOR UPDATE TO authenticated USING (auth.uid() = sender_id);
 
+DROP POLICY IF EXISTS "messages_delete_policy" ON public.messages;
 CREATE POLICY "messages_delete_policy" ON public.messages
     FOR DELETE TO authenticated USING (auth.uid() = sender_id);
 
 -- Notifications Policies
-CREATE POLICY "Users can view their own notifications" ON public.notifications
+DROP POLICY IF EXISTS "notifications_select_policy" ON public.notifications;
+CREATE POLICY "notifications_select_policy" ON public.notifications
     FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can update their own notifications" ON public.notifications
+DROP POLICY IF EXISTS "notifications_update_policy" ON public.notifications;
+CREATE POLICY "notifications_update_policy" ON public.notifications
     FOR UPDATE TO authenticated USING (auth.uid() = user_id);
 
+-- NEW: Allow system to insert notifications for users
+DROP POLICY IF EXISTS "notifications_insert_policy" ON public.notifications;
+CREATE POLICY "notifications_insert_policy" ON public.notifications
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id OR user_id IS NULL);
+
+-- NEW: Allow users to delete their own notifications
+DROP POLICY IF EXISTS "notifications_delete_policy" ON public.notifications;
+CREATE POLICY "notifications_delete_policy" ON public.notifications
+    FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
 -- Neighborhoods Policies
+DROP POLICY IF EXISTS "neighborhoods_select_policy" ON public.neighborhoods;
 CREATE POLICY "neighborhoods_select_policy" ON public.neighborhoods
     FOR SELECT TO authenticated USING (true);
 
+DROP POLICY IF EXISTS "neighborhoods_insert_policy" ON public.neighborhoods;
 CREATE POLICY "neighborhoods_insert_policy" ON public.neighborhoods
     FOR INSERT TO authenticated WITH CHECK (true);
 
+DROP POLICY IF EXISTS "neighborhoods_update_policy" ON public.neighborhoods;
 CREATE POLICY "neighborhoods_update_policy" ON public.neighborhoods
     FOR UPDATE TO authenticated USING (
         EXISTS (
-            SELECT 1 FROM user_roles 
-            WHERE user_roles.user_id = auth.uid() 
+            SELECT 1 FROM user_roles
+            WHERE user_roles.user_id = auth.uid()
             AND user_roles.role = 'admin'::user_role
         )
     );
 
+DROP POLICY IF EXISTS "neighborhoods_delete_policy" ON public.neighborhoods;
 CREATE POLICY "neighborhoods_delete_policy" ON public.neighborhoods
     FOR DELETE TO authenticated USING (
         EXISTS (
-            SELECT 1 FROM user_roles 
-            WHERE user_roles.user_id = auth.uid() 
+            SELECT 1 FROM user_roles
+            WHERE user_roles.user_id = auth.uid()
             AND user_roles.role = 'admin'::user_role
         )
     );
 
 -- User Roles Policies
+DROP POLICY IF EXISTS "user_roles_select_policy" ON public.user_roles;
 CREATE POLICY "user_roles_select_policy" ON public.user_roles
     FOR SELECT TO authenticated USING (true);
 
+DROP POLICY IF EXISTS "user_roles_insert_policy" ON public.user_roles;
 CREATE POLICY "user_roles_insert_policy" ON public.user_roles
     FOR INSERT TO authenticated WITH CHECK (true);
 
+DROP POLICY IF EXISTS "user_roles_update_policy" ON public.user_roles;
 CREATE POLICY "user_roles_update_policy" ON public.user_roles
     FOR UPDATE TO authenticated USING (
         EXISTS (
             SELECT 1 FROM user_roles user_roles_1
-            WHERE user_roles_1.user_id = auth.uid() 
+            WHERE user_roles_1.user_id = auth.uid()
             AND user_roles_1.role = 'admin'::user_role
         )
     );
 
+DROP POLICY IF EXISTS "user_roles_delete_policy" ON public.user_roles;
 CREATE POLICY "user_roles_delete_policy" ON public.user_roles
     FOR DELETE TO authenticated USING (
         EXISTS (
             SELECT 1 FROM user_roles user_roles_1
-            WHERE user_roles_1.user_id = auth.uid() 
+            WHERE user_roles_1.user_id = auth.uid()
             AND user_roles_1.role = 'admin'::user_role
         )
     );
 
--- Create Functions
+-- ============================================
+-- FUNCTIONS
+-- ============================================
+
+-- Helper function that bypasses RLS for policy checks
+-- SECURITY DEFINER means it runs with elevated privileges,
+-- so inner queries don't trigger RLS policies again
+CREATE OR REPLACE FUNCTION public.get_current_user_neighborhood_id()
+RETURNS uuid
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+    SELECT neighborhood_id FROM public.profiles WHERE id = auth.uid();
+$$;
+
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -337,9 +392,9 @@ SECURITY DEFINER
 AS $function$
 BEGIN
   RETURN EXISTS (
-    SELECT 1 
-    FROM public.user_roles 
-    WHERE user_roles.user_id = $1 
+    SELECT 1
+    FROM public.user_roles
+    WHERE user_roles.user_id = $1
     AND user_roles.role = 'admin'
   );
 END;
@@ -357,7 +412,7 @@ BEGIN
     WHERE ST_Contains(
         ST_SetSRID(
             ST_GeomFromGeoJSON(
-                CASE 
+                CASE
                     WHEN boundaries->>'type' = 'Polygon' THEN boundaries::text
                     WHEN boundaries->>'geometry' IS NOT NULL THEN boundaries->>'geometry'
                     ELSE NULL
@@ -367,9 +422,9 @@ BEGIN
         ),
         ST_SetSRID(ST_MakePoint(lon, lat), 4326)
     );
-    
+
     RAISE NOTICE 'Checking point %, % against neighborhoods', lon, lat;
-    
+
     RETURN neighborhood_id;
 END;
 $function$;
@@ -386,22 +441,67 @@ BEGIN
 END;
 $function$;
 
--- Create Triggers
+-- ============================================
+-- TRIGGERS
+-- ============================================
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW
     EXECUTE FUNCTION handle_new_user();
 
+DROP TRIGGER IF EXISTS ensure_valid_event_times ON events;
 CREATE TRIGGER ensure_valid_event_times
     BEFORE INSERT OR UPDATE ON events
     FOR EACH ROW
     EXECUTE FUNCTION validate_event_timestamps();
 
--- Create Indexes (if needed)
+-- ============================================
+-- INDEXES
+-- ============================================
+
 CREATE INDEX IF NOT EXISTS idx_profiles_neighborhood_id ON profiles(neighborhood_id);
 CREATE INDEX IF NOT EXISTS idx_events_neighborhood_id ON events(neighborhood_id);
+CREATE INDEX IF NOT EXISTS idx_events_start_time ON events(start_time);  -- NEW: for ordering
 CREATE INDEX IF NOT EXISTS idx_alerts_neighborhood_id ON alerts(neighborhood_id);
 CREATE INDEX IF NOT EXISTS idx_marketplace_items_neighborhood_id ON marketplace_items(neighborhood_id);
+CREATE INDEX IF NOT EXISTS idx_marketplace_items_status ON marketplace_items(status);  -- NEW: for filtering
 CREATE INDEX IF NOT EXISTS idx_messages_neighborhood_id ON messages(neighborhood_id);
+CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id);  -- NEW: for joins
+CREATE INDEX IF NOT EXISTS idx_messages_receiver_id ON messages(receiver_id);  -- NEW: for joins
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read);  -- NEW: for filtering
 CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON user_roles(user_id);
+
+-- ============================================
+-- STORAGE BUCKET SETUP (NEW)
+-- ============================================
+
+-- Create the app-uploads bucket for image uploads
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+    'app-uploads',
+    'app-uploads',
+    true,
+    5242880, -- 5MB limit
+    ARRAY['image/png', 'image/jpeg', 'image/gif', 'image/webp']
+) ON CONFLICT (id) DO NOTHING;
+
+-- Allow authenticated users to upload
+DROP POLICY IF EXISTS "Allow authenticated uploads" ON storage.objects;
+CREATE POLICY "Allow authenticated uploads" ON storage.objects
+    FOR INSERT TO authenticated WITH CHECK (bucket_id = 'app-uploads');
+
+-- Allow public access to view uploaded images
+DROP POLICY IF EXISTS "Allow public access to uploads" ON storage.objects;
+CREATE POLICY "Allow public access to uploads" ON storage.objects
+    FOR SELECT TO public USING (bucket_id = 'app-uploads');
+
+-- Allow users to delete their own uploads
+DROP POLICY IF EXISTS "Allow users to delete own uploads" ON storage.objects;
+CREATE POLICY "Allow users to delete own uploads" ON storage.objects
+    FOR DELETE TO authenticated USING (
+        bucket_id = 'app-uploads' 
+        AND (storage.foldername(name))[1] = auth.uid()::text
+    );
