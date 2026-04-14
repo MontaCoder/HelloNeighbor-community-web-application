@@ -1,7 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -16,22 +15,21 @@ export default function Admin() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<"neighborhoods" | "settings">("neighborhoods");
 
-  // Check if user is admin
   const { data: isAdmin, isLoading, isError } = useQuery({
     queryKey: ["is-admin", user?.id],
     queryFn: async () => {
       if (!user?.id) return false;
       const { data, error } = await supabase
         .rpc('is_admin', { user_id: user.id });
-      
+
       if (error) throw error;
       return data;
     },
     enabled: !!user
   });
 
-  // Redirect non-admin users
   useEffect(() => {
     if (!isLoading && !isAdmin) {
       navigate("/dashboard");
@@ -99,21 +97,31 @@ export default function Admin() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="neighborhoods" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="neighborhoods">Neighborhoods</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="neighborhoods" className="space-y-4">
+          <div className="mb-4 flex gap-2">
+            <Button
+              size="sm"
+              variant={activeTab === "neighborhoods" ? "default" : "outline"}
+              onClick={() => setActiveTab("neighborhoods")}
+            >
+              Neighborhoods
+            </Button>
+            <Button
+              size="sm"
+              variant={activeTab === "settings" ? "default" : "outline"}
+              onClick={() => setActiveTab("settings")}
+            >
+              Settings
+            </Button>
+          </div>
+
+          {activeTab === "neighborhoods" ? (
+            <div className="space-y-4">
               <NeighborhoodForm />
               <NeighborhoodList />
-            </TabsContent>
-            
-            <TabsContent value="settings">
+            </div>
+          ) : (
               <p>System settings will be implemented here.</p>
-            </TabsContent>
-          </Tabs>
+          )}
         </CardContent>
       </Card>
     </div>

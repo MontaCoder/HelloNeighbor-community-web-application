@@ -18,12 +18,12 @@ export default function LocationSetup() {
   const { user } = useAuth();
   const { detectLocation, loading: locationLoading } = useLocation();
   const [noAccess, setNoAccess] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [debugInfo, setDebugInfo] = useState<unknown>(null);
 
   console.log("LocationSetup rendering, user:", user); // Debug log
 
   // Check if user is admin
-  const { data: isAdmin, isLoading: isAdminLoading } = useQuery({
+  const { data: isAdmin, isLoading: isAdminLoading, isError: isAdminError } = useQuery({
     queryKey: ["is-admin", user?.id],
     queryFn: async () => {
       if (!user?.id) return false;
@@ -32,7 +32,7 @@ export default function LocationSetup() {
       
       if (error) {
         console.error("Error checking admin status:", error);
-        return false;
+        throw error;
       }
       return data;
     },
@@ -58,7 +58,7 @@ export default function LocationSetup() {
 
   // Redirect admin users to admin panel
   useEffect(() => {
-    if (isAdmin) {
+    if (isAdmin === true) {
       console.log("User is admin, redirecting to admin panel");
       navigate("/admin");
     }
@@ -92,10 +92,14 @@ export default function LocationSetup() {
       }
     };
 
-    if (!isAdmin && user) {
+    if (isAdminLoading || isAdminError) {
+      return;
+    }
+
+    if (isAdmin === false && user) {
       checkLocation();
     }
-  }, [detectLocation, isAdmin, user, toast]);
+  }, [detectLocation, isAdmin, isAdminError, isAdminLoading, user, toast]);
 
   const handleRetryLocation = async () => {
     setNoAccess(false);
@@ -112,6 +116,24 @@ export default function LocationSetup() {
         <Card className="w-full max-w-2xl">
           <CardContent className="p-6 flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isAdminError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FAF9F6] p-4">
+        <Card className="w-full max-w-2xl">
+          <CardContent className="p-6">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>
+                There was an error checking admin permissions. Please try again later.
+              </AlertDescription>
+            </Alert>
           </CardContent>
         </Card>
       </div>

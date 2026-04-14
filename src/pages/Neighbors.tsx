@@ -1,4 +1,3 @@
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,12 +9,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import type { Database } from "@/integrations/supabase/types";
+
+type NeighborProfile = Database["public"]["Tables"]["profiles"]["Row"];
 
 export default function Neighbors() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
-  const [selectedNeighbor, setSelectedNeighbor] = useState<any>(null);
+  const [selectedNeighbor, setSelectedNeighbor] = useState<NeighborProfile | null>(null);
   const [messageContent, setMessageContent] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -110,88 +112,86 @@ export default function Neighbors() {
   };
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-[#FAF9F6]">
-        <AppSidebar />
-        <main className="flex-1 p-6">
-          <div className="max-w-6xl mx-auto">
-            <h1 className="text-3xl font-bold text-primary mb-6">Your Neighbors</h1>
+    <div className="min-h-screen flex flex-col md:flex-row w-full bg-[#FAF9F6]">
+      <AppSidebar />
+      <main className="flex-1 p-6">
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-3xl font-bold text-primary mb-6">Your Neighbors</h1>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {isLoading ? (
-                <p>Loading neighbors...</p>
-              ) : neighbors?.length === 0 ? (
-                <p>No neighbors found in your neighborhood</p>
-              ) : (
-                neighbors?.map((neighbor) => (
-                  <Card key={neighbor.id} className="hover:shadow-lg transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-4 mb-4">
-                        <Avatar className="h-16 w-16">
-                          <AvatarImage src={neighbor.avatar_url || ''} />
-                          <AvatarFallback>
-                            {neighbor.full_name?.charAt(0) || neighbor.username?.charAt(0) || 'N'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h3 className="font-semibold text-lg">
-                            {neighbor.full_name || neighbor.username}
-                          </h3>
-                        </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {isLoading ? (
+              <p>Loading neighbors...</p>
+            ) : neighbors?.length === 0 ? (
+              <p>No neighbors found in your neighborhood</p>
+            ) : (
+              neighbors?.map((neighbor) => (
+                <Card key={neighbor.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4 mb-4">
+                      <Avatar className="h-16 w-16">
+                        <AvatarImage src={neighbor.avatar_url || ''} />
+                        <AvatarFallback>
+                          {neighbor.full_name?.charAt(0) || neighbor.username?.charAt(0) || 'N'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="font-semibold text-lg">
+                          {neighbor.full_name || neighbor.username}
+                        </h3>
                       </div>
-                      {user?.id !== neighbor.id && (
-                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                          <DialogTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              className="w-full"
-                              onClick={() => setSelectedNeighbor(neighbor)}
-                            >
-                              <MessageSquare className="mr-2 h-4 w-4" />
-                              Send Message
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-[425px]">
-                            <DialogHeader>
-                              <DialogTitle>Chat with {neighbor.full_name || neighbor.username}</DialogTitle>
-                            </DialogHeader>
-                            <div className="flex flex-col space-y-4 max-h-[400px] overflow-y-auto p-4">
-                              {messages?.map((message) => (
-                                <div
-                                  key={message.id}
-                                  className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
-                                >
-                                  <div className={`max-w-[80%] p-3 rounded-lg ${
-                                    message.sender_id === user?.id ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                                  }`}>
-                                    <p className="text-sm">{message.content}</p>
-                                    <span className="text-xs opacity-70">
-                                      {new Date(message.created_at).toLocaleTimeString()}
-                                    </span>
-                                  </div>
+                    </div>
+                    {user?.id !== neighbor.id && (
+                      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            className="w-full"
+                            onClick={() => setSelectedNeighbor(neighbor)}
+                          >
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            Send Message
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                          <DialogHeader>
+                            <DialogTitle>Chat with {neighbor.full_name || neighbor.username}</DialogTitle>
+                          </DialogHeader>
+                          <div className="flex flex-col space-y-4 max-h-[400px] overflow-y-auto p-4">
+                            {messages?.map((message) => (
+                              <div
+                                key={message.id}
+                                className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+                              >
+                                <div className={`max-w-[80%] p-3 rounded-lg ${
+                                  message.sender_id === user?.id ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                                }`}>
+                                  <p className="text-sm">{message.content}</p>
+                                  <span className="text-xs opacity-70">
+                                    {new Date(message.created_at).toLocaleTimeString()}
+                                  </span>
                                 </div>
-                              ))}
-                            </div>
-                            <form onSubmit={handleSendPrivateMessage} className="flex gap-2">
-                              <Input
-                                value={messageContent}
-                                onChange={(e) => setMessageContent(e.target.value)}
-                                placeholder="Type your message..."
-                                className="flex-1"
-                              />
-                              <Button type="submit">Send</Button>
-                            </form>
-                          </DialogContent>
-                        </Dialog>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
+                              </div>
+                            ))}
+                          </div>
+                          <form onSubmit={handleSendPrivateMessage} className="flex gap-2">
+                            <Input
+                              value={messageContent}
+                              onChange={(e) => setMessageContent(e.target.value)}
+                              placeholder="Type your message..."
+                              className="flex-1"
+                            />
+                            <Button type="submit">Send</Button>
+                          </form>
+                        </DialogContent>
+                      </Dialog>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
-        </main>
-      </div>
-    </SidebarProvider>
+        </div>
+      </main>
+    </div>
   );
 }

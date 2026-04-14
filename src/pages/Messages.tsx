@@ -1,4 +1,3 @@
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -84,39 +83,37 @@ export default function Messages() {
   };
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-[#FAF9F6]">
-        <AppSidebar />
-        <main className="flex-1 flex">
-          <div className="flex-1 p-6">
-            <div className="max-w-4xl mx-auto">
-              <div className="flex items-center justify-between mb-6">
-                <h1 className="text-3xl font-bold text-primary">Community Chat</h1>
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5 text-gray-500" />
-                  <span className="text-sm text-gray-500">
-                    {messages?.length || 0} messages
-                  </span>
-                </div>
+    <div className="min-h-screen flex flex-col md:flex-row w-full bg-[#FAF9F6]">
+      <AppSidebar />
+      <main className="flex-1 flex flex-col lg:flex-row">
+        <div className="flex-1 p-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-3xl font-bold text-primary">Community Chat</h1>
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-gray-500" />
+                <span className="text-sm text-gray-500">
+                  {messages?.length || 0} messages
+                </span>
               </div>
-
-              <div className="flex flex-col space-y-4 mb-6 h-[calc(100vh-250px)] overflow-y-auto">
-                {messages?.map((message) => (
-                  <MessageItem
-                    key={message.id}
-                    message={message}
-                    currentUserId={user?.id}
-                    onMessageUpdate={refetch}
-                  />
-                ))}
-              </div>
-
-              <MessageInput onSendMessage={handleSendMessage} />
             </div>
+
+            <div className="flex flex-col space-y-4 mb-6 h-[calc(100vh-250px)] overflow-y-auto">
+              {messages?.map((message) => (
+                <MessageItem
+                  key={message.id}
+                  message={message}
+                  currentUserId={user?.id}
+                  onMessageUpdate={refetch}
+                />
+              ))}
+            </div>
+
+            <MessageInput onSendMessage={handleSendMessage} />
           </div>
-          <ActiveUsersSidebar />
-        </main>
-      </div>
-    </SidebarProvider>
+        </div>
+        <ActiveUsersSidebar />
+      </main>
+    </div>
   );
 }

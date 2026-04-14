@@ -1,6 +1,4 @@
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AlertsPreview } from "@/components/dashboard/AlertsPreview";
 import { EventsPreview } from "@/components/dashboard/EventsPreview";
@@ -123,56 +121,54 @@ const Index = () => {
   // If user is logged in, show the dashboard
   if (user) {
     return (
-      <SidebarProvider>
-        <div className="min-h-screen flex w-full bg-[#FAF9F6]">
-          <AppSidebar />
-          <main className="flex-1 p-6 overflow-auto">
-            <div className="max-w-7xl mx-auto space-y-8">
-              <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div>
-                    {loading ? (
-                      <Skeleton className="h-8 w-64 mb-2" />
-                    ) : (
-                      <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                        Welcome back, {profile?.full_name || user?.email?.split('@')[0] || "Neighbor"}
-                      </h1>
-                    )}
-                    {neighborhoodLoading ? (
-                      <Skeleton className="h-6 w-48" />
-                    ) : neighborhood && (
-                      <div className="flex items-center text-gray-600">
-                        <MapPin className="h-5 w-5 mr-2" />
-                        <p className="text-lg">
-                          {neighborhood.name}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  <LocationDetector />
+      <div className="min-h-screen flex flex-col md:flex-row w-full bg-[#FAF9F6]">
+        <AppSidebar />
+        <main className="flex-1 p-6 overflow-auto">
+          <div className="max-w-7xl mx-auto space-y-8">
+            <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                  {loading ? (
+                    <Skeleton className="h-8 w-64 mb-2" />
+                  ) : (
+                    <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                      Welcome back, {profile?.full_name || user?.email?.split('@')[0] || "Neighbor"}
+                    </h1>
+                  )}
+                  {neighborhoodLoading ? (
+                    <Skeleton className="h-6 w-48" />
+                  ) : neighborhood && (
+                    <div className="flex items-center text-gray-600">
+                      <MapPin className="h-5 w-5 mr-2" />
+                      <p className="text-lg">
+                        {neighborhood.name}
+                      </p>
+                    </div>
+                  )}
                 </div>
-              </div>
-              
-              <div className="space-y-6">
-                <Card className="border-0 shadow-sm">
-                  <CardContent className="p-0">
-                    <LocationMap 
-                      events={nearbyEvents} 
-                      alerts={nearbyAlerts}
-                      items={nearbyItems}
-                    />
-                  </CardContent>
-                </Card>
-
-                <div className="grid gap-6 md:grid-cols-2">
-                  <AlertsPreview />
-                  <EventsPreview />
-                </div>
+                <LocationDetector />
               </div>
             </div>
-          </main>
-        </div>
-      </SidebarProvider>
+            
+            <div className="space-y-6">
+              <Card className="border-0 shadow-sm">
+                <CardContent className="p-0">
+                  <LocationMap 
+                    events={nearbyEvents} 
+                    alerts={nearbyAlerts}
+                    items={nearbyItems}
+                  />
+                </CardContent>
+              </Card>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <AlertsPreview />
+                <EventsPreview />
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
     );
   }
 
