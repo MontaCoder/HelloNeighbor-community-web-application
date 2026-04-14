@@ -4,10 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+
+const selectClassName =
+  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
+
+type AlertFormValues = {
+  title: string;
+  message: string;
+  type: string;
+  urgency: string;
+};
 
 interface AlertFormProps {
   onSuccess: () => void;
@@ -16,7 +25,7 @@ interface AlertFormProps {
 export function AlertForm({ onSuccess }: AlertFormProps) {
   const { user, profile } = useAuth();
   const { toast } = useToast();
-  const form = useForm({
+  const form = useForm<AlertFormValues>({
     defaultValues: {
       title: "",
       message: "",
@@ -25,7 +34,7 @@ export function AlertForm({ onSuccess }: AlertFormProps) {
     }
   });
 
-  const onSubmit = async (values: any) => {
+  const onSubmit = async (values: AlertFormValues) => {
     try {
       const { error } = await supabase
         .from("alerts")
@@ -87,39 +96,29 @@ export function AlertForm({ onSuccess }: AlertFormProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="type">Type</Label>
-              <Select
-                onValueChange={(value) => form.setValue("type", value)}
-                defaultValue={form.getValues("type")}
-                aria-label="Alert type"
+              <select
+                id="type"
+                {...form.register("type")}
+                className={selectClassName}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="general">General</SelectItem>
-                  <SelectItem value="emergency">Emergency</SelectItem>
-                  <SelectItem value="weather">Weather</SelectItem>
-                  <SelectItem value="safety">Safety</SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="general">General</option>
+                <option value="emergency">Emergency</option>
+                <option value="weather">Weather</option>
+                <option value="safety">Safety</option>
+              </select>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="urgency">Urgency</Label>
-              <Select
-                onValueChange={(value) => form.setValue("urgency", value)}
-                defaultValue={form.getValues("urgency")}
-                aria-label="Alert urgency"
+              <select
+                id="urgency"
+                {...form.register("urgency")}
+                className={selectClassName}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select urgency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
             </div>
           </div>
 

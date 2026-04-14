@@ -1,19 +1,29 @@
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ImageUpload } from "@/components/shared/ImageUpload";
 
+const selectClassName =
+  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
+
+type ExchangeFormValues = {
+  title: string;
+  description: string;
+  price: string;
+  category: string;
+  image_urls?: string[];
+};
+
 interface ExchangeFormProps {
-  onSubmit: (values: any) => void;
-  defaultValues?: any;
+  onSubmit: (values: ExchangeFormValues) => void;
+  defaultValues?: Partial<ExchangeFormValues>;
   mode?: 'create' | 'edit';
 }
 
 export function ExchangeForm({ onSubmit, defaultValues = {}, mode = 'create' }: ExchangeFormProps) {
-  const form = useForm({
+  const form = useForm<ExchangeFormValues>({
     defaultValues: {
       title: "",
       description: "",
@@ -72,21 +82,14 @@ export function ExchangeForm({ onSubmit, defaultValues = {}, mode = 'create' }: 
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Category</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="general">General</SelectItem>
-                    <SelectItem value="furniture">Furniture</SelectItem>
-                    <SelectItem value="electronics">Electronics</SelectItem>
-                    <SelectItem value="clothing">Clothing</SelectItem>
-                    <SelectItem value="books">Books</SelectItem>
-                    <SelectItem value="services">Services</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select {...field} className={selectClassName}>
+                  <option value="general">General</option>
+                  <option value="furniture">Furniture</option>
+                  <option value="electronics">Electronics</option>
+                  <option value="clothing">Clothing</option>
+                  <option value="books">Books</option>
+                  <option value="services">Services</option>
+                </select>
               </FormItem>
             )}
           />

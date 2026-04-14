@@ -1,7 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth/AuthProvider";
+
+type ExchangeFormValues = {
+  title: string;
+  description: string;
+  price: string;
+  category: string;
+  image_urls?: string[];
+};
 
 export function useExchange() {
   const { toast } = useToast();
@@ -45,7 +53,7 @@ export function useExchange() {
     refetch();
   };
 
-  const handleCreate = async (values: any) => {
+  const handleCreate = async (values: ExchangeFormValues) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -78,7 +86,7 @@ export function useExchange() {
     }
   };
 
-  const handleEdit = async (itemId: string, values: any) => {
+  const handleEdit = async (itemId: string, values: ExchangeFormValues) => {
     try {
       const { error } = await supabase
         .from("marketplace_items")

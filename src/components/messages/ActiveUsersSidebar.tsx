@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -14,52 +14,33 @@ interface User {
   neighborhood_id?: string;
 }
 
+type PresenceRecord = {
+  user_id?: string;
+  neighborhood_id?: string;
+};
+
 export function ActiveUsersSidebar() {
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { profile } = useAuth();
 
-  useEffect(() => {
-    if (!profile?.neighborhood_id) return;
-
-    // Subscribe to presence changes for specific neighborhood
-    const channel = supabase.channel(`online-users-${profile.neighborhood_id}`)
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const onlineUsers = Object.values(state)
-          .flat()
-          .filter((presence: any) => presence.neighborhood_id === profile.neighborhood_id) as any[];
-        updateUsers(onlineUsers);
-      })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        console.log('join', key, newPresences);
-      })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-        console.log('leave', key, leftPresences);
-      })
-      .subscribe(async (status) => {
-        if (status !== 'SUBSCRIBED') return;
-        
-        const userStatus = {
-          online_at: new Date().toISOString(),
-          status: 'online',
-          user_id: profile.id,
-          neighborhood_id: profile.neighborhood_id
-        };
-        
-        await channel.track(userStatus);
-      });
-
-    // Fetch initial users from the same neighborhood
-    fetchUsers();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+  const updateUsers = useCallback((presenceState: PresenceRecord[]) => {
+    setUsers(currentUsers =>
+      currentUsers.map(user => ({
+        ...user,
+        status: presenceState.some(
+          (presence) =>
+            presence.user_id === user.id &&
+            presence.neighborhood_id === profile?.neighborhood_id
+        )
+          ? 'online'
+          : 'offline'
+      }))
+    );
   }, [profile?.neighborhood_id]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     if (!profile?.neighborhood_id) return;
 
     const { data: profiles, error } = await supabase
@@ -84,19 +65,45 @@ export function ActiveUsersSidebar() {
       }));
       setUsers(transformedUsers);
     }
-  };
+  }, [profile?.neighborhood_id, profile?.id]);
 
-  const updateUsers = (presenceState: any[]) => {
-    setUsers(currentUsers => 
-      currentUsers.map(user => ({
-        ...user,
-        status: presenceState.find(p => 
-          p.user_id === user.id && 
-          p.neighborhood_id === profile?.neighborhood_id
-        ) ? 'online' : 'offline'
-      }))
-    );
-  };
+  useEffect(() => {
+    if (!profile?.neighborhood_id) return;
+
+    const channel = supabase
+      .channel(`online-users-${profile.neighborhood_id}`)
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState() as Record<string, PresenceRecord[]>;
+        const onlineUsers = (Object.values(state).flat() as PresenceRecord[]).filter(
+          (presence) => presence.neighborhood_id === profile.neighborhood_id
+        );
+        updateUsers(onlineUsers);
+      })
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        console.log('join', key, newPresences);
+      })
+      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        console.log('leave', key, leftPresences);
+      })
+      .subscribe(async (status) => {
+        if (status !== 'SUBSCRIBED') return;
+
+        const userStatus = {
+          online_at: new Date().toISOString(),
+          status: 'online',
+          user_id: profile.id,
+          neighborhood_id: profile.neighborhood_id
+        };
+
+        await channel.track(userStatus);
+      });
+
+    fetchUsers();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchUsers, profile?.neighborhood_id, profile?.id, updateUsers]);
 
   const filteredUsers = users.filter(user => 
     user.full_name?.toLowerCase().includes(searchQuery.toLowerCase())

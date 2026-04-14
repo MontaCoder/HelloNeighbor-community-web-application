@@ -5,19 +5,21 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AuthError } from "@supabase/supabase-js";
+import { AuthError, Session } from "@supabase/supabase-js";
 
 export default function AuthPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [fullName, setFullName] = useState("");
 
   useEffect(() => {
-    const handleAuthChange = async (event: string, session: any) => {
+    const handleAuthChange = async (event: string, session: Session | null) => {
       console.log("Auth change detected:", event, session?.user?.id);
       
       if (session) {
@@ -120,8 +122,30 @@ export default function AuthPage() {
                   <AlertDescription>{authError}</AlertDescription>
                 </Alert>
               )}
+              <div className="mb-4 space-y-2 rounded-lg border border-[#D9E3DA] bg-white/70 p-4">
+                <label htmlFor="full_name" className="block text-sm font-medium text-foreground">
+                  Full Name
+                </label>
+                <Input
+                  id="full_name"
+                  name="full_name"
+                  value={fullName}
+                  onChange={(event) => setFullName(event.target.value)}
+                  form="auth-sign-up"
+                  required
+                  minLength={2}
+                  pattern=".*\\S.*"
+                  autoComplete="name"
+                  placeholder="Enter your full name"
+                  title="Please enter your full name"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Required for new accounts so neighbors can recognize you clearly in the app.
+                </p>
+              </div>
               <Auth
                 supabaseClient={supabase}
+                additionalData={fullName.trim() ? { full_name: fullName.trim() } : undefined}
                 appearance={{
                   theme: ThemeSupa,
                   variables: {

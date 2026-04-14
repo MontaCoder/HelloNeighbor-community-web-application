@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLocation } from '@/hooks/useLocation';
 import { useToast } from '@/hooks/use-toast';
@@ -8,27 +7,22 @@ export function LocationDetector() {
   const { loading, detectLocation } = useLocation();
   const { toast } = useToast();
 
-  useEffect(() => {
-    const initLocation = async () => {
-      try {
-        console.log("LocationDetector: Initializing location detection");
-        await detectLocation();
-      } catch (error) {
-        console.error('LocationDetector: Error detecting location:', error);
-        toast({
-          title: 'Location Error',
-          description: 'Could not automatically detect your location. Please try manually.',
-          variant: 'destructive'
-        });
-      }
-    };
-
-    initLocation();
-  }, [detectLocation, toast]);
+  const handleDetectLocation = async () => {
+    try {
+      await detectLocation();
+    } catch (error) {
+      console.error('LocationDetector: Error detecting location:', error);
+      toast({
+        title: 'Location Error',
+        description: 'Could not automatically detect your location. Please try manually.',
+        variant: 'destructive'
+      });
+    }
+  };
 
   return (
-    <Button 
-      onClick={() => detectLocation()} 
+    <Button
+      onClick={() => handleDetectLocation()}
       disabled={loading}
       variant="outline"
       className="w-full"

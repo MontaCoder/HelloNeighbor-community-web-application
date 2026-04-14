@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { useQueryClient } from "@tanstack/react-query";
 import Map from 'ol/Map';
 import View from 'ol/View';
@@ -29,13 +30,14 @@ export default function NeighborhoodForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [drawingInstructions, setDrawingInstructions] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<Map | null>(null);
   const [draw, setDraw] = useState<Draw | null>(null);
   const [boundaries, setBoundaries] = useState<number[][][] | null>(null);
   const vectorSourceRef = useRef<VectorSource>(new VectorSource());
-  
+
   const { register, handleSubmit, reset, formState: { errors } } = useForm<NeighborhoodFormData>();
 
   // Initialize the map and drawing interaction
@@ -105,35 +107,67 @@ export default function NeighborhoodForm() {
       return;
     }
 
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create a neighborhood.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
+    let newNeighborhoodId: string | null = null;
+
     try {
-      const { error } = await supabase
+      // Step 1: Insert the neighborhood with created_by
+      const { data: newNeighborhood, error } = await supabase
         .from('neighborhoods')
-        .insert([
-          {
-            name: data.name,
-            description: data.description,
-            boundaries: {
-              type: "Polygon",
-              coordinates: boundaries
-            }
-          }
-        ], { returning: 'minimal' }); // Use parameterized query
+        .insert({
+          name: data.name,
+          description: data.description,
+          boundaries: {
+            type: "Polygon",
+            coordinates: boundaries
+          },
+          created_by: user.id
+        })
+        .select('id')
+        .single();
 
       if (error) throw error;
 
+      newNeighborhoodId = newNeighborhood.id;
+
+      // Step 2: Auto-assign the admin to this neighborhood
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          neighborhood_id: newNeighborhoodId,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (updateError) {
+        console.error('Failed to auto-assign neighborhood:', updateError);
+        // Don't fail the whole operation, but notify user
+      }
+
       toast({
         title: "Success",
-        description: "Neighborhood created successfully"
+        description: "Neighborhood created and assigned to you!"
       });
 
-      // Reset form and map
+      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["neighborhoods"] });
+      queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
+
+      // Reset form and map
       reset();
       vectorSourceRef.current.clear();
       setBoundaries(null);
       setDrawingInstructions(true);
-      
+
     } catch (error) {
       console.error('Error creating neighborhood:', error);
       toast({

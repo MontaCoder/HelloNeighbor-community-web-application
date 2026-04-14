@@ -1,12 +1,15 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
+import { Database } from "@/integrations/supabase/types";
+
+type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 
 type AuthContextType = {
   user: User | null;
-  profile: any | null;
+  profile: ProfileRow | null;
   loading: boolean;
 };
 
@@ -20,11 +23,11 @@ export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<any | null>(null);
+  const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const fetchProfile = async (userId: string, retryCount = 0) => {
+  const fetchProfile = useCallback(async (userId: string, retryCount = 0) => {
     try {
       console.log("Fetching profile for user:", userId);
       
@@ -63,8 +66,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
 
-      console.log("Profile fetched:", data);
-      setProfile(data);
+      const metadataFullName =
+        typeof session.user.user_metadata?.full_name === "string"
+          ? session.user.user_metadata.full_name.trim()
+          : "";
+      let profileData: ProfileRow | null = data;
+
+      if (metadataFullName && !profileData?.full_name) {
+        const { data: updatedProfile, error: updateError } = await supabase
+          .from("profiles")
+          .update({
+            full_name: metadataFullName,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", userId)
+          .select("*")
+          .maybeSingle();
+
+        if (updateError) {
+          console.error("Error syncing full name to profile:", updateError);
+          profileData = profileData
+            ? { ...profileData, full_name: metadataFullName }
+            : { id: userId, full_name: metadataFullName };
+        } else if (updatedProfile) {
+          profileData = updatedProfile;
+        }
+      }
+
+      console.log("Profile fetched:", profileData);
+      setProfile(profileData);
       setLoading(false);
     } catch (error) {
       console.error('Error in fetchProfile:', error);
@@ -76,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         variant: "destructive"
       });
     }
-  };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -142,7 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         cleanupSubscription();
       }
     };
-  }, []);
+  }, [fetchProfile]);
 
   return (
     <AuthContext.Provider value={{ user, profile, loading }}>

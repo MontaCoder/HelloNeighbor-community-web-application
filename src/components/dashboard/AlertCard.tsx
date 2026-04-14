@@ -4,18 +4,30 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
+import type { Database } from "@/integrations/supabase/types";
+
+const selectClassName =
+  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
+
+type AlertRow = Database["public"]["Tables"]["alerts"]["Row"];
+
+type AlertFormValues = {
+  title: string;
+  message: string;
+  type: string;
+  urgency: string;
+};
 
 interface AlertCardProps {
-  alert: any;
+  alert: AlertRow;
   onDelete: (alertId: string) => void;
-  onEdit: (alertId: string, values: any) => void;
+  onEdit: (alertId: string, values: AlertFormValues) => void;
 }
 
 export function AlertCard({ alert, onDelete, onEdit }: AlertCardProps) {
   const { user } = useAuth();
-  const form = useForm({
+  const form = useForm<AlertFormValues>({
     defaultValues: {
       title: alert.title,
       message: alert.message,
@@ -87,19 +99,12 @@ export function AlertCard({ alert, onDelete, onEdit }: AlertCardProps) {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Type</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="general">General</SelectItem>
-                              <SelectItem value="safety">Safety</SelectItem>
-                              <SelectItem value="maintenance">Maintenance</SelectItem>
-                              <SelectItem value="event">Event</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <select {...field} className={selectClassName}>
+                            <option value="general">General</option>
+                            <option value="safety">Safety</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="event">Event</option>
+                          </select>
                         </FormItem>
                       )}
                     />
@@ -109,18 +114,11 @@ export function AlertCard({ alert, onDelete, onEdit }: AlertCardProps) {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Urgency</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="low">Low</SelectItem>
-                              <SelectItem value="medium">Medium</SelectItem>
-                              <SelectItem value="high">High</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <select {...field} className={selectClassName}>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                          </select>
                         </FormItem>
                       )}
                     />
