@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Calendar, MapPin } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export function EventList() {
   const { user, profile } = useAuth();
@@ -18,78 +20,116 @@ export function EventList() {
         .select("*")
         .eq("neighborhood_id", profile?.neighborhood_id)
         .order("start_time", { ascending: true });
-      
+
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id
+    enabled: !!profile?.neighborhood_id,
   });
 
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from("events")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.from("events").delete().eq("id", id);
 
       if (error) throw error;
 
       toast({
         title: "Event deleted",
-        description: "The event has been removed successfully."
+        description: "The event has been removed successfully.",
       });
 
       refetch();
     } catch (error) {
-      console.error('Error deleting event:', error);
+      console.error("Error deleting event:", error);
       toast({
         title: "Error",
         description: "There was a problem deleting the event.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
+  const formatDate = (date: string) => {
+    const d = new Date(date);
+    return d.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const formatTime = (date: string) => {
+    const d = new Date(date);
+    return d.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
+
+  if (!events?.length) {
+    return (
+      <div className="text-center py-12">
+        <Calendar className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+        <h3 className="text-lg font-semibold mb-2">No events yet</h3>
+        <p className="text-muted-foreground text-sm">
+          Create your first community event to get started.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {events?.map((event) => (
-        <Card key={event.id}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xl font-bold">{event.title}</CardTitle>
+        <div
+          key={event.id}
+          className="group rounded-xl bg-card border border-border/40 p-4 shadow-soft-sm hover:shadow-soft-md transition-all duration-300"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <Badge variant="soft-primary" className="mb-2">
+                <Calendar className="h-3 w-3 mr-1" />
+                Event
+              </Badge>
+              <h3 className="font-semibold text-lg text-foreground mb-2">
+                {event.title}
+              </h3>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3.5 w-3.5" />
+                  {formatDate(event.start_time)} at {formatTime(event.start_time)}
+                </span>
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-3.5 w-3.5" />
+                  {event.location}
+                </span>
+              </div>
+              {event.description && (
+                <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                  {event.description}
+                </p>
+              )}
+            </div>
             {user?.id === event.created_by && (
               <Button
                 variant="ghost"
-                size="icon"
+                size="icon-sm"
+                className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={() => handleDelete(event.id)}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3.5 w-3.5" />
               </Button>
             )}
-          </CardHeader>
-          <CardContent>
-            {event.image_url && (
-              <img
-                src={event.image_url}
-                alt={event.title}
-                className="w-full h-48 object-cover rounded-md mb-4"
-              />
-            )}
-            <p className="text-gray-600">{event.description}</p>
-            <div className="mt-4 space-y-2">
-              <p className="text-sm">
-                <strong>Location:</strong> {event.location}
-              </p>
-              <p className="text-sm">
-                <strong>Start:</strong>{" "}
-                {new Date(event.start_time).toLocaleString()}
-              </p>
-              <p className="text-sm">
-                <strong>End:</strong>{" "}
-                {new Date(event.end_time).toLocaleString()}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+          {event.image_url && (
+            <img
+              src={event.image_url}
+              alt={event.title}
+              className="mt-4 rounded-lg w-full h-40 object-cover"
+            />
+          )}
+        </div>
       ))}
     </div>
   );
