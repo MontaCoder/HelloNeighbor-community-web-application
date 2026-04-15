@@ -21,8 +21,8 @@ export function MessageItem({ message, currentUserId, onMessageUpdate }: Message
   const { toast } = useToast();
   const form = useForm({
     defaultValues: {
-      content: message.content
-    }
+      content: message.content,
+    },
   });
 
   const handleDelete = async () => {
@@ -36,14 +36,14 @@ export function MessageItem({ message, currentUserId, onMessageUpdate }: Message
 
       toast({
         title: "Message deleted",
-        description: "Your message has been removed."
+        description: "Your message has been removed.",
       });
       onMessageUpdate();
     } catch (error) {
       toast({
         title: "Error deleting message",
         description: "Please try again later.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -59,7 +59,7 @@ export function MessageItem({ message, currentUserId, onMessageUpdate }: Message
 
       toast({
         title: "Message updated",
-        description: "Your message has been updated successfully."
+        description: "Your message has been updated successfully.",
       });
       setIsEditing(false);
       onMessageUpdate();
@@ -67,50 +67,57 @@ export function MessageItem({ message, currentUserId, onMessageUpdate }: Message
       toast({
         title: "Error updating message",
         description: "Please try again later.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
+  const isOwnMessage = message.sender_id === currentUserId;
+
   return (
-    <Card className={`${message.sender_id === currentUserId ? 'ml-auto bg-primary/5' : ''} max-w-[80%]`}>
+    <Card
+      className={`group transition-all duration-200 hover:shadow-soft-sm ${
+        isOwnMessage ? "bg-primary/5 ml-auto" : "bg-card"
+      } max-w-[85%]`}
+    >
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={message.sender.avatar_url || ''} />
-            <AvatarFallback>
-              {message.sender.full_name?.charAt(0) || 'N'}
+          <Avatar className="h-9 w-9 ring-2 ring-primary/10">
+            <AvatarImage src={message.sender.avatar_url || ""} />
+            <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+              {message.sender.full_name?.charAt(0) || "N"}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-1">
-              <p className="font-semibold text-sm">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-1 gap-4">
+              <p className="font-semibold text-sm text-foreground">
                 {message.sender.full_name || message.sender.username}
               </p>
-              <span className="text-xs text-gray-500">
-                {new Date(message.created_at).toLocaleTimeString()}
+              <span className="text-xs text-muted-foreground flex-shrink-0">
+                {new Date(message.created_at).toLocaleTimeString([], {
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
               </span>
             </div>
-            <p className="text-gray-600">{message.content}</p>
+            <p className="text-foreground text-sm leading-relaxed">{message.content}</p>
             {message.image_url && (
               <div className="mt-2">
-                <img 
-                  src={message.image_url} 
-                  alt="Message attachment" 
-                  className="max-w-full rounded-lg max-h-[300px] object-contain"
+                <img
+                  src={message.image_url}
+                  alt="Message attachment"
+                  className="max-w-full rounded-lg max-h-[250px] object-contain"
                 />
               </div>
             )}
-            {message.sender_id === currentUserId && (
-              <div className="flex gap-2 mt-2 justify-end">
+            {isOwnMessage && (
+              <div className="flex gap-2 mt-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <Dialog open={isEditing} onOpenChange={setIsEditing}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon-sm" className="h-7 w-7">
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Edit Message</DialogTitle>
@@ -128,17 +135,20 @@ export function MessageItem({ message, currentUserId, onMessageUpdate }: Message
                             </FormItem>
                           )}
                         />
-                        <Button type="submit" className="w-full">Update Message</Button>
+                        <Button type="submit" className="w-full">
+                          Update Message
+                        </Button>
                       </form>
                     </Form>
                   </DialogContent>
                 </Dialog>
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive"
                   onClick={handleDelete}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
             )}
