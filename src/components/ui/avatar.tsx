@@ -1,6 +1,6 @@
-import * as React from "react"
+import * as React from "react";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 const Avatar = React.forwardRef<
   HTMLDivElement,
@@ -9,22 +9,22 @@ const Avatar = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full bg-muted",
+      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-background shadow-soft-sm",
       className
     )}
     {...props}
   />
-))
-Avatar.displayName = "Avatar"
+));
+Avatar.displayName = "Avatar";
 
 const AvatarImage = React.forwardRef<
   HTMLImageElement,
   React.ImgHTMLAttributes<HTMLImageElement>
 >(({ className, src, alt = "", onError, ...props }, ref) => {
-  const [failed, setFailed] = React.useState(false)
+  const [failed, setFailed] = React.useState(false);
 
   if (!src || failed) {
-    return null
+    return null;
   }
 
   return (
@@ -34,14 +34,14 @@ const AvatarImage = React.forwardRef<
       alt={alt}
       className={cn("aspect-square h-full w-full object-cover", className)}
       onError={(event) => {
-        setFailed(true)
-        onError?.(event)
+        setFailed(true);
+        onError?.(event);
       }}
       {...props}
     />
-  )
-})
-AvatarImage.displayName = "AvatarImage"
+  );
+});
+AvatarImage.displayName = "AvatarImage";
 
 const AvatarFallback = React.forwardRef<
   HTMLDivElement,
@@ -55,7 +55,7 @@ const AvatarFallback = React.forwardRef<
     )}
     {...props}
   />
-))
-AvatarFallback.displayName = "AvatarFallback"
+));
+AvatarFallback.displayName = "AvatarFallback";
 
-export { Avatar, AvatarImage, AvatarFallback }
+export { Avatar, AvatarImage, AvatarFallback };

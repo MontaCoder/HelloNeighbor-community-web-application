@@ -1,30 +1,30 @@
-import * as React from "react"
-import { createPortal } from "react-dom"
-import { X } from "lucide-react"
+import * as React from "react";
+import { createPortal } from "react-dom";
+import { X } from "lucide-react";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 type DialogContextValue = {
-  open: boolean
-  setOpen: (open: boolean) => void
-}
+  open: boolean;
+  setOpen: (open: boolean) => void;
+};
 
-const DialogContext = React.createContext<DialogContextValue | null>(null)
+const DialogContext = React.createContext<DialogContextValue | null>(null);
 
 const useDialog = () => {
-  const context = React.useContext(DialogContext)
+  const context = React.useContext(DialogContext);
   if (!context) {
-    throw new Error("Dialog components must be used within <Dialog>.")
+    throw new Error("Dialog components must be used within <Dialog>.");
   }
-  return context
-}
+  return context;
+};
 
 type DialogProps = {
-  open?: boolean
-  defaultOpen?: boolean
-  onOpenChange?: (open: boolean) => void
-  children: React.ReactNode
-}
+  open?: boolean;
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  children: React.ReactNode;
+};
 
 const Dialog = ({
   open: controlledOpen,
@@ -32,55 +32,55 @@ const Dialog = ({
   onOpenChange,
   children,
 }: DialogProps) => {
-  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen)
-  const open = controlledOpen ?? uncontrolledOpen
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen);
+  const open = controlledOpen ?? uncontrolledOpen;
 
   const setOpen = React.useCallback(
     (nextOpen: boolean) => {
       if (controlledOpen === undefined) {
-        setUncontrolledOpen(nextOpen)
+        setUncontrolledOpen(nextOpen);
       }
-      onOpenChange?.(nextOpen)
+      onOpenChange?.(nextOpen);
     },
     [controlledOpen, onOpenChange]
-  )
+  );
 
   return (
     <DialogContext.Provider value={{ open, setOpen }}>
       {children}
     </DialogContext.Provider>
-  )
-}
+  );
+};
 
 type DialogTriggerProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  asChild?: boolean
-}
+  asChild?: boolean;
+};
 
 const DialogTrigger = React.forwardRef<HTMLButtonElement, DialogTriggerProps>(
   ({ asChild = false, children, className, onClick, ...props }, ref) => {
-    const { setOpen } = useDialog()
+    const { setOpen } = useDialog();
 
     const handleClick: React.MouseEventHandler<HTMLButtonElement> = (event) => {
-      onClick?.(event)
+      onClick?.(event);
       if (!event.defaultPrevented) {
-        setOpen(true)
+        setOpen(true);
       }
-    }
+    };
 
     if (asChild && React.isValidElement(children)) {
       const child = children as React.ReactElement<{
-        className?: string
-        onClick?: React.MouseEventHandler
-      }>
+        className?: string;
+        onClick?: React.MouseEventHandler;
+      }>;
 
       return React.cloneElement(child, {
         ...props,
         className: cn(child.props.className, className),
         onClick: (event: React.MouseEvent) => {
-          child.props.onClick?.(event)
-          handleClick(event)
+          child.props.onClick?.(event);
+          handleClick(event);
         },
-      })
+      });
     }
 
     return (
@@ -93,38 +93,38 @@ const DialogTrigger = React.forwardRef<HTMLButtonElement, DialogTriggerProps>(
       >
         {children}
       </button>
-    )
+    );
   }
-)
-DialogTrigger.displayName = "DialogTrigger"
+);
+DialogTrigger.displayName = "DialogTrigger";
 
 const DialogContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, children, ...props }, ref) => {
-  const { open, setOpen } = useDialog()
+  const { open, setOpen } = useDialog();
 
   React.useEffect(() => {
-    if (!open || typeof document === "undefined") return
+    if (!open || typeof document === "undefined") return;
 
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = "hidden"
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setOpen(false)
+        setOpen(false);
       }
-    }
+    };
 
-    document.addEventListener("keydown", handleKeyDown)
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.body.style.overflow = previousOverflow
-      document.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [open, setOpen])
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open, setOpen]);
 
   if (!open || typeof document === "undefined") {
-    return null
+    return null;
   }
 
   return createPortal(
@@ -132,7 +132,7 @@ const DialogContent = React.forwardRef<
       <button
         type="button"
         aria-label="Close dialog"
-        className="absolute inset-0 bg-black/60"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={() => setOpen(false)}
       />
       <div
@@ -140,7 +140,7 @@ const DialogContent = React.forwardRef<
         role="dialog"
         aria-modal="true"
         className={cn(
-          "relative z-10 w-full max-w-lg rounded-lg border bg-background p-6 shadow-lg",
+          "relative z-10 w-full max-w-lg rounded-2xl border border-border/60 bg-background p-6 shadow-soft-xl animate-scale-in",
           className
         )}
         {...props}
@@ -149,7 +149,7 @@ const DialogContent = React.forwardRef<
         <button
           type="button"
           aria-label="Close dialog"
-          className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100"
+          className="absolute right-4 top-4 rounded-full p-1.5 opacity-60 transition-opacity hover:opacity-100 hover:bg-muted"
           onClick={() => setOpen(false)}
         >
           <X className="h-4 w-4" />
@@ -157,9 +157,9 @@ const DialogContent = React.forwardRef<
       </div>
     </div>,
     document.body
-  )
-})
-DialogContent.displayName = "DialogContent"
+  );
+});
+DialogContent.displayName = "DialogContent";
 
 const DialogHeader = ({
   className,
@@ -172,8 +172,8 @@ const DialogHeader = ({
     )}
     {...props}
   />
-)
-DialogHeader.displayName = "DialogHeader"
+);
+DialogHeader.displayName = "DialogHeader";
 
 const DialogTitle = React.forwardRef<
   HTMLHeadingElement,
@@ -184,15 +184,26 @@ const DialogTitle = React.forwardRef<
     className={cn("text-lg font-semibold leading-none tracking-tight", className)}
     {...props}
   />
-))
-DialogTitle.displayName = "DialogTitle"
+));
+DialogTitle.displayName = "DialogTitle";
 
 const DialogDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <p ref={ref} className={cn("text-sm text-muted-foreground", className)} {...props} />
-))
-DialogDescription.displayName = "DialogDescription"
+  <p
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+));
+DialogDescription.displayName = "DialogDescription";
 
-export { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription }
+export {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+};
