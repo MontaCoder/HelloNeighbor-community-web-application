@@ -1,7 +1,7 @@
-import { Button } from '@/components/ui/button';
-import { useLocation } from '@/hooks/useLocation';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { useLocation } from "@/hooks/useLocation";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, MapPin } from "lucide-react";
 
 export function LocationDetector() {
   const { loading, detectLocation } = useLocation();
@@ -11,11 +11,11 @@ export function LocationDetector() {
     try {
       await detectLocation();
     } catch (error) {
-      console.error('LocationDetector: Error detecting location:', error);
+      console.error("LocationDetector: Error detecting location:", error);
       toast({
-        title: 'Location Error',
-        description: 'Could not automatically detect your location. Please try manually.',
-        variant: 'destructive'
+        title: "Location Error",
+        description: "Could not automatically detect your location. Please try manually.",
+        variant: "destructive",
       });
     }
   };
@@ -25,15 +25,19 @@ export function LocationDetector() {
       onClick={() => handleDetectLocation()}
       disabled={loading}
       variant="outline"
-      className="w-full"
+      size="sm"
+      className="gap-2 btn-lift"
     >
       {loading ? (
         <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Detecting location...
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Detecting...
         </>
       ) : (
-        "Update Current Location"
+        <>
+          <MapPin className="h-4 w-4" />
+          Update Location
+        </>
       )}
     </Button>
   );
