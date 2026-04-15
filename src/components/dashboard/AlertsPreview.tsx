@@ -20,34 +20,31 @@ export function AlertsPreview() {
       const { data, error } = await supabase
         .from("alerts")
         .select("*")
-        .eq('neighborhood_id', profile?.neighborhood_id)
+        .eq("neighborhood_id", profile?.neighborhood_id)
         .order("created_at", { ascending: false })
         .limit(3);
-      
+
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id
+    enabled: !!profile?.neighborhood_id,
   });
 
   const handleDelete = async (alertId: string) => {
-    const { error } = await supabase
-      .from("alerts")
-      .delete()
-      .eq("id", alertId);
+    const { error } = await supabase.from("alerts").delete().eq("id", alertId);
 
     if (error) {
       toast({
         title: "Error deleting alert",
         description: "Please try again later.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
     toast({
       title: "Alert deleted",
-      description: "The alert has been removed successfully."
+      description: "The alert has been removed successfully.",
     });
     refetch();
   };
@@ -61,7 +58,7 @@ export function AlertsPreview() {
           message: values.message,
           type: values.type,
           urgency: values.urgency,
-          neighborhood_id: profile?.neighborhood_id
+          neighborhood_id: profile?.neighborhood_id,
         })
         .eq("id", alertId);
 
@@ -69,7 +66,7 @@ export function AlertsPreview() {
 
       toast({
         title: "Alert updated",
-        description: "Your alert has been updated successfully."
+        description: "Your alert has been updated successfully.",
       });
 
       refetch();
@@ -77,40 +74,47 @@ export function AlertsPreview() {
       toast({
         title: "Error updating alert",
         description: "Please try again later.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
   return (
-    <Card className="animate-fade-in h-full">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg font-bold">Recent Alerts</CardTitle>
-        <div className="flex items-center gap-2">
-          <Bell className="h-5 w-5 text-accent" />
-          <Button 
-            variant="outline" 
+    <Card className="animate-scale-in">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+              <Bell className="h-4 w-4 text-destructive" />
+            </div>
+            Recent Alerts
+          </CardTitle>
+          <Button
+            variant="ghost"
             size="sm"
-            onClick={() => navigate('/alerts')}
-            className="hidden sm:flex"
+            onClick={() => navigate("/alerts")}
+            className="text-muted-foreground"
           >
             View All
           </Button>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-3">
           {isLoading ? (
-            Array(3).fill(0).map((_, i) => (
-              <Skeleton key={i} className="h-24 w-full" />
-            ))
+            Array(2)
+              .fill(0)
+              .map((_, i) => (
+                <Skeleton key={i} className="h-20 w-full rounded-xl" />
+              ))
           ) : alerts?.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No recent alerts
-            </p>
+            <div className="text-center py-8">
+              <Bell className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+              <p className="text-sm text-muted-foreground">No recent alerts</p>
+            </div>
           ) : (
             alerts?.map((alert) => (
-              <AlertCard 
+              <AlertCard
                 key={alert.id}
                 alert={alert}
                 onDelete={handleDelete}

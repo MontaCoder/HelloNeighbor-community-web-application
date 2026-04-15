@@ -13,42 +13,52 @@ export function EventsPreview() {
   const navigate = useNavigate();
 
   return (
-    <Card className="animate-fade-in">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg font-bold">Upcoming Events</CardTitle>
-        <div className="flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-accent" />
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Plus className="h-4 w-4 mr-1" />
-                Create
-              </Button>
-            </DialogTrigger>
-            <EventForm mode="create" onSubmit={handleCreate} />
-          </Dialog>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => navigate('/events')}
-          >
-            View All
-          </Button>
+    <Card className="animate-scale-in">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+              <Calendar className="h-4 w-4 text-accent" />
+            </div>
+            Upcoming Events
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 btn-lift">
+                  <Plus className="h-3.5 w-3.5" />
+                  Create
+                </Button>
+              </DialogTrigger>
+              <EventForm mode="create" onSubmit={handleCreate} />
+            </Dialog>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/events")}
+              className="text-muted-foreground"
+            >
+              View All
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-3">
           {isLoading ? (
-            Array(3).fill(0).map((_, i) => (
-              <Skeleton key={i} className="h-24 w-full" />
-            ))
+            Array(2)
+              .fill(0)
+              .map((_, i) => (
+                <Skeleton key={i} className="h-24 w-full rounded-xl" />
+              ))
           ) : events?.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No upcoming events
-            </p>
+            <div className="text-center py-8">
+              <Calendar className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+              <p className="text-sm text-muted-foreground">No upcoming events</p>
+            </div>
           ) : (
-            events?.map((event) => (
-              <EventCard 
+            events?.slice(0, 3).map((event) => (
+              <EventCard
                 key={event.id}
                 event={event}
                 onDelete={handleDelete}

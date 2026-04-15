@@ -1,8 +1,9 @@
-import { Calendar, Pencil, Trash2 } from "lucide-react";
+import { Calendar, Pencil, Trash2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import { EventForm } from "./EventForm";
+import { EventForm } from "@/components/events/EventForm";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { Badge } from "@/components/ui/badge";
 
 interface EventCardProps {
   event: any;
@@ -13,23 +14,53 @@ interface EventCardProps {
 export function EventCard({ event, onDelete, onEdit }: EventCardProps) {
   const { user } = useAuth();
 
+  const formatDate = (date: string) => {
+    const d = new Date(date);
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const formatTime = (date: string) => {
+    const d = new Date(date);
+    return d.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
+
   return (
-    <div key={event.id} className="rounded-lg bg-secondary/10 p-3">
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="font-semibold">{event.title}</h3>
-          <p className="text-sm text-gray-600">
-            {new Date(event.start_time).toLocaleDateString()} at{" "}
-            {new Date(event.start_time).toLocaleTimeString()}
-          </p>
-          <p className="text-sm text-gray-600">{event.location}</p>
+    <div className="group rounded-xl bg-card border border-border/40 p-4 shadow-soft-sm hover:shadow-soft-md hover:-translate-y-0.5 transition-all duration-300">
+      <div className="flex justify-between items-start gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-2">
+            <Badge variant="soft-primary" className="text-xs">
+              <Calendar className="h-3 w-3 mr-1" />
+              Event
+            </Badge>
+          </div>
+          <h3 className="font-semibold text-foreground truncate mb-1">
+            {event.title}
+          </h3>
+          <div className="flex items-center gap-1 text-sm text-muted-foreground mb-1">
+            <Calendar className="h-3.5 w-3.5" />
+            <span>
+              {formatDate(event.start_time)} at {formatTime(event.start_time)}
+            </span>
+          </div>
+          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+            <MapPin className="h-3.5 w-3.5" />
+            <span className="truncate">{event.location}</span>
+          </div>
         </div>
         {user && event.created_by === user.id && (
-          <div className="flex gap-2">
+          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Pencil className="h-4 w-4" />
+                <Button variant="ghost" size="icon-sm" className="h-8 w-8">
+                  <Pencil className="h-3.5 w-3.5" />
                 </Button>
               </DialogTrigger>
               <EventForm
@@ -40,10 +71,11 @@ export function EventCard({ event, onDelete, onEdit }: EventCardProps) {
             </Dialog>
             <Button
               variant="ghost"
-              size="icon"
+              size="icon-sm"
+              className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
               onClick={() => onDelete(event.id)}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </div>
         )}
@@ -52,7 +84,7 @@ export function EventCard({ event, onDelete, onEdit }: EventCardProps) {
         <img
           src={event.image_url}
           alt={event.title}
-          className="mt-3 rounded-lg w-full h-48 object-cover"
+          className="mt-4 rounded-lg w-full h-32 object-cover"
         />
       )}
     </div>
