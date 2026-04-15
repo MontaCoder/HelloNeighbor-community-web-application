@@ -9,8 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { ImageUpload } from "@/components/shared/ImageUpload";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Settings, User, LogOut } from "lucide-react";
 
-export default function Settings() {
+export default function SettingsPage() {
   const { profile, user } = useAuth();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -19,24 +20,24 @@ export default function Settings() {
   });
 
   const { data: neighborhood } = useQuery({
-    queryKey: ['neighborhood', profile?.neighborhood_id],
+    queryKey: ["neighborhood", profile?.neighborhood_id],
     queryFn: async () => {
       if (!profile?.neighborhood_id) return null;
       const { data, error } = await supabase
-        .from('neighborhoods')
-        .select('name')
-        .eq('id', profile.neighborhood_id)
+        .from("neighborhoods")
+        .select("name")
+        .eq("id", profile.neighborhood_id)
         .single();
-      
+
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id
+    enabled: !!profile?.neighborhood_id,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const { error } = await supabase
       .from("profiles")
       .update(formData)
@@ -57,89 +58,121 @@ export default function Settings() {
   };
 
   const handleAvatarUpload = (url: string) => {
-    setFormData(prev => ({ ...prev, avatar_url: url }));
+    setFormData((prev) => ({ ...prev, avatar_url: url }));
   };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
   };
 
+  const initials = formData.full_name
+    ?.split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || user?.email?.[0]?.toUpperCase() || "U";
+
   return (
-    <div className="min-h-screen flex flex-col md:flex-row w-full bg-[#FAF9F6]">
+    <div className="min-h-screen flex flex-col w-full bg-muted/20">
       <AppSidebar />
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8">
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-3xl font-bold text-primary mb-6">Settings</h1>
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Settings className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                Settings
+              </h1>
+              <p className="text-muted-foreground text-sm">
+                Manage your account and preferences
+              </p>
+            </div>
+          </div>
 
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Profile Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="flex flex-col items-center space-y-4">
-                  <Avatar className="w-24 h-24">
-                    <AvatarImage src={formData.avatar_url} alt={formData.full_name} />
-                    <AvatarFallback>{formData.full_name?.charAt(0)?.toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                  <ImageUpload
-                    onImageUploaded={handleAvatarUpload}
-                    existingUrl={formData.avatar_url}
-                  >
-                    <Button type="button" variant="outline">
-                      Change Avatar
-                    </Button>
-                  </ImageUpload>
+          <div className="space-y-6 animate-scale-in">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-muted-foreground" />
+                  <CardTitle>Profile Settings</CardTitle>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Full Name
-                  </label>
-                  <Input
-                    value={formData.full_name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, full_name: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Email
-                  </label>
-                  <Input
-                    value={user?.email || ""}
-                    disabled
-                    className="bg-gray-50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Neighborhood
-                  </label>
-                  <Input
-                    value={neighborhood?.name || "Not set"}
-                    disabled
-                    className="bg-gray-50"
-                  />
-                </div>
-                <Button type="submit">Save Changes</Button>
-              </form>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="flex flex-col items-center space-y-4">
+                    <Avatar className="w-20 h-20 ring-4 ring-primary/10">
+                      <AvatarImage src={formData.avatar_url} alt={formData.full_name} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <ImageUpload
+                      onImageUploaded={handleAvatarUpload}
+                      existingUrl={formData.avatar_url}
+                    >
+                      <Button type="button" variant="outline" size="sm">
+                        Change Avatar
+                      </Button>
+                    </ImageUpload>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-foreground">
+                      Full Name
+                    </label>
+                    <Input
+                      value={formData.full_name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, full_name: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-foreground">
+                      Email
+                    </label>
+                    <Input
+                      value={user?.email || ""}
+                      disabled
+                      className="bg-muted/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-foreground">
+                      Neighborhood
+                    </label>
+                    <Input
+                      value={neighborhood?.name || "Not set"}
+                      disabled
+                      className="bg-muted/50"
+                    />
+                  </div>
+                  <Button type="submit" className="w-full btn-lift">
+                    Save Changes
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Account</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Button
-                variant="destructive"
-                onClick={handleLogout}
-              >
-                Sign Out
-              </Button>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <LogOut className="h-5 w-5 text-destructive" />
+                  <CardTitle>Account</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  variant="destructive"
+                  onClick={handleLogout}
+                  className="w-full"
+                >
+                  Sign Out
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </main>
     </div>

@@ -8,30 +8,33 @@ import { LocationMap } from "@/components/location/LocationMap";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { MapPin } from "lucide-react";
+import { MapPin, Sparkles, Bell, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const { user, loading, profile } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: neighborhood, isLoading: neighborhoodLoading } = useQuery({
-    queryKey: ['neighborhood', profile?.neighborhood_id],
+    queryKey: ["neighborhood", profile?.neighborhood_id],
     queryFn: async () => {
       if (!profile?.neighborhood_id) return null;
       const { data, error } = await supabase
-        .from('neighborhoods')
-        .select('name')
-        .eq('id', profile.neighborhood_id)
+        .from("neighborhoods")
+        .select("name")
+        .eq("id", profile.neighborhood_id)
         .single();
-      
+
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id
+    enabled: !!profile?.neighborhood_id,
   });
 
   const { data: nearbyEvents, isLoading: eventsLoading } = useQuery({
@@ -40,13 +43,13 @@ const Index = () => {
       const { data, error } = await supabase
         .from("events")
         .select("*")
-        .eq('neighborhood_id', profile?.neighborhood_id)
+        .eq("neighborhood_id", profile?.neighborhood_id)
         .order("start_time", { ascending: true });
-      
+
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id
+    enabled: !!profile?.neighborhood_id,
   });
 
   const { data: nearbyAlerts, isLoading: alertsLoading } = useQuery({
@@ -55,13 +58,13 @@ const Index = () => {
       const { data, error } = await supabase
         .from("alerts")
         .select("*")
-        .eq('neighborhood_id', profile?.neighborhood_id)
+        .eq("neighborhood_id", profile?.neighborhood_id)
         .order("created_at", { ascending: false });
-      
+
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id
+    enabled: !!profile?.neighborhood_id,
   });
 
   const { data: nearbyItems, isLoading: itemsLoading } = useQuery({
@@ -70,45 +73,51 @@ const Index = () => {
       const { data, error } = await supabase
         .from("marketplace_items")
         .select("*")
-        .eq('neighborhood_id', profile?.neighborhood_id)
+        .eq("neighborhood_id", profile?.neighborhood_id)
         .eq("status", "available")
         .order("created_at", { ascending: false });
-      
+
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id
+    enabled: !!profile?.neighborhood_id,
   });
 
-  // Set up realtime subscriptions
   useEffect(() => {
     if (!profile?.neighborhood_id) return;
 
-    const channel = supabase.channel('dashboard-updates')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'events',
-        filter: `neighborhood_id=eq.${profile.neighborhood_id}`
-      }, () => {
-        // Refetch events when changes occur
-        queryClient.invalidateQueries({ queryKey: ["nearby-events"] });
-      })
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'alerts',
-        filter: `neighborhood_id=eq.${profile.neighborhood_id}`
-      }, (payload) => {
-        // Show notification for new alerts
-        if (payload.eventType === 'INSERT') {
-          toast({
-            title: "New Alert",
-            description: "A new alert has been posted in your neighborhood",
-          });
+    const channel = supabase
+      .channel("dashboard-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "events",
+          filter: `neighborhood_id=eq.${profile.neighborhood_id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["nearby-events"] });
         }
-        queryClient.invalidateQueries({ queryKey: ["nearby-alerts"] });
-      })
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "alerts",
+          filter: `neighborhood_id=eq.${profile.neighborhood_id}`,
+        },
+        (payload) => {
+          if (payload.eventType === "INSERT") {
+            toast({
+              title: "New Alert",
+              description: "A new alert has been posted in your neighborhood",
+            });
+          }
+          queryClient.invalidateQueries({ queryKey: ["nearby-alerts"] });
+        }
+      )
       .subscribe();
 
     return () => {
@@ -118,52 +127,77 @@ const Index = () => {
 
   if (loading) return null;
 
-  // If user is logged in, show the dashboard
   if (user) {
     return (
-      <div className="min-h-screen flex flex-col md:flex-row w-full bg-[#FAF9F6]">
+      <div className="min-h-screen flex flex-col w-full bg-muted/20">
         <AppSidebar />
-        <main className="flex-1 p-6 overflow-auto">
-          <div className="max-w-7xl mx-auto space-y-8">
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <main className="flex-1">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="mb-8">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
                 <div>
                   {loading ? (
-                    <Skeleton className="h-8 w-64 mb-2" />
+                    <Skeleton className="h-10 w-72 mb-3" />
                   ) : (
-                    <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                      Welcome back, {profile?.full_name || user?.email?.split('@')[0] || "Neighbor"}
+                    <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+                      Welcome back,{" "}
+                      <span className="text-gradient">
+                        {profile?.full_name?.split(" ")[0] ||
+                          user?.email?.split("@")[0] ||
+                          "Neighbor"}
+                      </span>
                     </h1>
                   )}
                   {neighborhoodLoading ? (
                     <Skeleton className="h-6 w-48" />
-                  ) : neighborhood && (
-                    <div className="flex items-center text-gray-600">
-                      <MapPin className="h-5 w-5 mr-2" />
-                      <p className="text-lg">
-                        {neighborhood.name}
-                      </p>
-                    </div>
+                  ) : (
+                    neighborhood && (
+                      <div className="flex items-center text-muted-foreground mt-2">
+                        <MapPin className="h-4 w-4 mr-2 text-accent" />
+                        <span className="text-base">{neighborhood.name}</span>
+                      </div>
+                    )
                   )}
                 </div>
-                <LocationDetector />
+
+                <div className="flex flex-wrap gap-3">
+                  <LocationDetector />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate("/alerts")}
+                    className="gap-2"
+                  >
+                    <Bell className="h-4 w-4" />
+                    View Alerts
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate("/events")}
+                    className="gap-2"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    All Events
+                  </Button>
+                </div>
               </div>
             </div>
-            
+
             <div className="space-y-6">
-              <Card className="border-0 shadow-sm">
+              <Card className="overflow-hidden">
                 <CardContent className="p-0">
-                  <LocationMap 
-                    events={nearbyEvents} 
+                  <LocationMap
+                    events={nearbyEvents}
                     alerts={nearbyAlerts}
                     items={nearbyItems}
                   />
                 </CardContent>
               </Card>
 
-              <div className="grid gap-6 md:grid-cols-2">
-                <AlertsPreview />
+              <div className="grid lg:grid-cols-2 gap-6">
                 <EventsPreview />
+                <AlertsPreview />
               </div>
             </div>
           </div>
@@ -172,7 +206,6 @@ const Index = () => {
     );
   }
 
-  // Landing page for non-authenticated users
   return <LandingPage />;
 };
 
