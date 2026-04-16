@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/card";
 import { useMap } from "@/hooks/useMap";
 import { createMapMarker } from "./MapMarker";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin } from "lucide-react";
 
 interface LocationMapProps {
   events?: any[];
