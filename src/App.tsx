@@ -1,7 +1,7 @@
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router";
 import { AuthProvider, useAuth } from "./components/auth/AuthProvider";
 import AuthPage from "./components/auth/AuthPage";
 import LocationSetup from "./pages/LocationSetup";
