@@ -56,6 +56,14 @@ type DialogTriggerProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   asChild?: boolean;
 };
 
+type DialogTriggerChildProps = Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  "onClick"
+> & {
+  className?: string;
+  onClick?: React.MouseEventHandler<Element>;
+};
+
 const DialogTrigger = React.forwardRef<HTMLButtonElement, DialogTriggerProps>(
   ({ asChild = false, children, className, onClick, ...props }, ref) => {
     const { setOpen } = useDialog();
@@ -67,18 +75,15 @@ const DialogTrigger = React.forwardRef<HTMLButtonElement, DialogTriggerProps>(
       }
     };
 
-    if (asChild && React.isValidElement(children)) {
-      const child = children as React.ReactElement<{
-        className?: string;
-        onClick?: React.MouseEventHandler;
-      }>;
-
-      return React.cloneElement(child, {
+    if (asChild && React.isValidElement<DialogTriggerChildProps>(children)) {
+      return React.cloneElement(children, {
         ...props,
-        className: cn(child.props.className, className),
-        onClick: (event: React.MouseEvent) => {
-          child.props.onClick?.(event);
-          handleClick(event);
+        className: cn(children.props.className, className),
+        onClick: (event: React.MouseEvent<Element>) => {
+          children.props.onClick?.(event);
+          if (!event.defaultPrevented) {
+            setOpen(true);
+          }
         },
       });
     }

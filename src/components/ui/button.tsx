@@ -38,11 +38,15 @@ interface ButtonProps
   asChild?: boolean;
 }
 
+type ButtonChildProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  className?: string;
+};
+
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, children, ...props }, ref) => {
     const classes = cn(buttonVariants({ variant, size }), className);
 
-    if (asChild && React.isValidElement(children)) {
+    if (asChild && React.isValidElement<ButtonChildProps>(children)) {
       return React.cloneElement(children, {
         ...props,
         className: cn(children.props.className, classes),
