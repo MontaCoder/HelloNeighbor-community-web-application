@@ -5,10 +5,11 @@ import { toast } from "@/hooks/use-toast";
 import { Database } from "@/integrations/supabase/types";
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
+type ProfileState = Pick<ProfileRow, "id"> & Partial<Omit<ProfileRow, "id">>;
 
 type AuthContextType = {
   user: User | null;
-  profile: ProfileRow | null;
+  profile: ProfileState | null;
   loading: boolean;
 };
 
@@ -22,7 +23,7 @@ export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [profile, setProfile] = useState<ProfileState | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = useCallback(async (userId: string, retryCount = 0) => {
@@ -68,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         typeof session.user.user_metadata?.full_name === "string"
           ? session.user.user_metadata.full_name.trim()
           : "";
-      let profileData: ProfileRow | null = data;
+      let profileData: ProfileState | null = data;
 
       if (metadataFullName && !profileData?.full_name) {
         const { data: updatedProfile, error: updateError } = await supabase
