@@ -39,7 +39,7 @@ export function ImageUpload({ onImageUploaded, existingUrl, children }: ImageUpl
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('app-uploads')
         .upload(filePath, file);
 
