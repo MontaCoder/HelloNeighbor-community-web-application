@@ -1,6 +1,6 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
-import { Facebook, Twitter, Instagram, Linkedin, Github } from "lucide-react";
+import { Bird, Briefcase, Camera, Code2, Globe } from "lucide-react";
 
 export const Footer = () => {
   const navigate = useNavigate();
@@ -33,11 +33,11 @@ export const Footer = () => {
   };
 
   const socialLinks = [
-    { icon: Twitter, href: "#", label: "Twitter" },
-    { icon: Facebook, href: "#", label: "Facebook" },
-    { icon: Instagram, href: "#", label: "Instagram" },
-    { icon: Linkedin, href: "#", label: "LinkedIn" },
-    { icon: Github, href: "#", label: "GitHub" },
+    { icon: Bird, href: "#", label: "Twitter" },
+    { icon: Globe, href: "#", label: "Facebook" },
+    { icon: Camera, href: "#", label: "Instagram" },
+    { icon: Briefcase, href: "#", label: "LinkedIn" },
+    { icon: Code2, href: "#", label: "GitHub" },
   ];
 
   return (
