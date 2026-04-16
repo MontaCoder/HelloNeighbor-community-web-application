@@ -5,7 +5,7 @@ import { useEvents } from "./events/useEvents";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { EventForm } from "./events/EventForm";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function EventsPreview() {

@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertCard } from "./AlertCard";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function AlertsPreview() {
