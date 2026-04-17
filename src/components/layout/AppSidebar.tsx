@@ -51,11 +51,7 @@ export function AppSidebar() {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-8">
             <NavLink to="/" className="flex items-center gap-2">
-              <img
-                src="/imgs/logo.png"
-                alt="HelloNeighbor"
-                className="h-8 w-auto"
-              />
+              <img src="/imgs/logo.png" alt="HelloNeighbor" className="h-9 w-auto" />
               <span className="font-semibold text-primary hidden sm:block">
                 HelloNeighbor
               </span>

@@ -80,6 +80,14 @@
 }
 
 @layer utilities {
+  .hood-bg {
+    background-image: url("/imgs/hood.webp");
+    background-image: image-set(
+      url("/imgs/hood.avif") type("image/avif"),
+      url("/imgs/hood.webp") type("image/webp")
+    );
+  }
+
   .animate-shimmer {
     animation: shimmer 2s ease-in-out infinite;
     background: linear-gradient(

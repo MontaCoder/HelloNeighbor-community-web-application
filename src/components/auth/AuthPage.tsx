@@ -112,7 +112,7 @@ export default function AuthPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-4">
-            <img src="/imgs/logo.png" alt="HelloNeighbor" className="h-10 w-auto" />
+            <img src="/imgs/logo.png" alt="HelloNeighbor" className="h-11 w-auto" />
           </Link>
           <h1 className="text-2xl font-bold text-foreground">Join Your Community</h1>
           <p className="text-muted-foreground mt-2">
