@@ -26,7 +26,7 @@ export const Navigation = () => {
             <img
               src="/imgs/logo.png"
               alt="HelloNeighbor"
-              className={`h-9 w-auto transition-all duration-300 ${isScrolled ? "" : "brightness-0 invert"}`}
+              className={`h-10 w-auto transition-all duration-300 ${isScrolled ? "" : "brightness-0 invert"}`}
             />
             <span className={`font-semibold text-lg tracking-tight transition-colors duration-300 ${isScrolled ? "text-foreground" : "text-white"}`}>
               HelloNeighbor

@@ -15,8 +15,7 @@ export const Cta = () => {
   return (
     <section className="py-32 relative overflow-hidden">
       <div
-        className="absolute inset-0 bg-fixed bg-cover bg-center"
-        style={{ backgroundImage: "url('/imgs/hood.png')" }}
+        className="absolute inset-0 bg-fixed bg-cover bg-center hood-bg"
       />
       <div className="absolute inset-0 bg-gradient-to-r from-primary-dark/95 via-primary-dark/85 to-primary-dark/90" />
       <div className="absolute inset-0 bg-gradient-to-t from-primary-dark/50 via-transparent to-transparent" />

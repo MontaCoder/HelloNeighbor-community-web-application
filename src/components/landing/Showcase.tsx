@@ -94,11 +94,15 @@ export const Showcase = () => {
 
             <div className="relative bg-card rounded-2xl shadow-soft-xl border border-border/40 overflow-hidden">
               <div className="aspect-[4/3] relative">
-                <img
-                  src="/imgs/hood.png"
-                  alt="Neighborhood"
-                  className="w-full h-full object-cover"
-                />
+                <picture className="block w-full h-full">
+                  <source srcSet="/imgs/hood.avif" type="image/avif" />
+                  <source srcSet="/imgs/hood.webp" type="image/webp" />
+                  <img
+                    src="/imgs/hood.webp"
+                    alt="Neighborhood"
+                    className="block w-full h-full object-cover"
+                  />
+                </picture>
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
 
                 <div className="absolute bottom-6 left-6 right-6">

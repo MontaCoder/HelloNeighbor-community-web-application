@@ -80,8 +80,7 @@ export const Stats = () => {
   return (
     <section id="stats" ref={sectionRef} className="py-24 bg-primary-dark relative overflow-hidden">
       <div
-        className="absolute inset-0 bg-fixed bg-cover bg-center opacity-15"
-        style={{ backgroundImage: "url('/imgs/hood.png')" }}
+        className="absolute inset-0 bg-fixed bg-cover bg-center opacity-15 hood-bg"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-primary-dark via-primary-dark/95 to-primary-dark" />
 

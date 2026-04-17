@@ -101,7 +101,7 @@ export const Features = () => {
         </div>
 
         <div className="mt-24 p-8 md:p-12 rounded-3xl bg-gradient-to-br from-primary-dark via-primary to-primary-light relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/imgs/hood.png')] bg-cover bg-center opacity-10" />
+          <div className="absolute inset-0 hood-bg bg-cover bg-center opacity-10" />
           <div className="absolute inset-0 bg-gradient-to-r from-primary-dark/90 to-transparent" />
 
           <div className="relative flex flex-col md:flex-row items-center justify-between gap-8">

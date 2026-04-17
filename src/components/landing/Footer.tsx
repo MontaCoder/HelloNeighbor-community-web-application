@@ -90,11 +90,7 @@ export const Footer = () => {
           <div className="grid grid-cols-2 md:grid-cols-6 gap-8 lg:gap-12">
             <div className="col-span-2">
               <a href="/" className="flex items-center gap-2 mb-6">
-                <img
-                  src="/imgs/logo.png"
-                  alt="HelloNeighbor"
-                  className="h-8 w-auto"
-                />
+                <img src="/imgs/logo.png" alt="HelloNeighbor" className="h-9 w-auto" />
                 <span className="font-semibold text-foreground text-lg">
                   HelloNeighbor
                 </span>
