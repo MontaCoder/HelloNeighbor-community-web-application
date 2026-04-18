@@ -1,6 +1,6 @@
 -- Database Schema Backup (FIXED)
 -- Generated on: 2024-03-19
--- Fixed on: 2026-04-13
+-- Fixed on: 2026-04-18
 
 -- ============================================
 -- ESSENTIAL EXTENSIONS
@@ -414,6 +414,8 @@ BEGIN
             ST_GeomFromGeoJSON(
                 CASE
                     WHEN boundaries->>'type' = 'Polygon' THEN boundaries::text
+                    WHEN boundaries->>'type' = 'MultiPolygon' THEN boundaries::text
+                    WHEN boundaries->>'type' = 'Feature' AND boundaries->'geometry' IS NOT NULL THEN (boundaries->'geometry')::text
                     WHEN boundaries->>'geometry' IS NOT NULL THEN boundaries->>'geometry'
                     ELSE NULL
                 END
