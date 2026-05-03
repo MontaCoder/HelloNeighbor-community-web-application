@@ -10,10 +10,8 @@ export const useLocation = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const findNeighborhood = async (latitude: number, longitude: number) => {
+  const findNeighborhood = useCallback(async (latitude: number, longitude: number) => {
     try {
-      console.log('Checking neighborhood for coordinates:', { latitude, longitude });
-      
       const { data: neighborhood, error } = await supabase
         .rpc('find_neighborhood', { lat: latitude, lon: longitude });
 
@@ -27,7 +25,6 @@ export const useLocation = () => {
         throw error;
       }
       
-      console.log('Found neighborhood:', neighborhood);
       return neighborhood;
     } catch (error) {
       console.error('Error finding neighborhood:', error);
@@ -38,18 +35,15 @@ export const useLocation = () => {
       });
       return null;
     }
-  };
+  }, [toast]);
 
   const updateUserLocation = useCallback(async (latitude: number, longitude: number) => {
     try {
-      console.log('Updating user location:', { latitude, longitude });
-      
       if (!user?.id) {
         throw new Error('User not authenticated');
       }
 
       const neighborhood_id = await findNeighborhood(latitude, longitude);
-      console.log('Resolved neighborhood_id:', neighborhood_id);
 
       if (!neighborhood_id) {
         toast({
@@ -75,8 +69,6 @@ export const useLocation = () => {
         throw error;
       }
 
-      console.log('Successfully updated user location with neighborhood:', neighborhood_id);
-      
       toast({
         title: "Location verified",
         description: "Welcome to your neighborhood!"
@@ -93,11 +85,10 @@ export const useLocation = () => {
       });
       return false;
     }
-  }, [user?.id, toast, navigate]);
+  }, [findNeighborhood, user?.id, toast, navigate]);
 
   const detectLocation = useCallback(async () => {
     setLoading(true);
-    console.log('Starting location detection...');
 
     if (!navigator.geolocation) {
       setLoading(false);
@@ -121,11 +112,6 @@ export const useLocation = () => {
             maximumAge: 0
           }
         );
-      });
-
-      console.log('Got position:', {
-        lat: position.coords.latitude,
-        lon: position.coords.longitude
       });
 
       const success = await updateUserLocation(

@@ -4,11 +4,21 @@ import { Card } from "@/components/ui/card";
 import { useMap } from "@/hooks/useMap";
 import { createMapMarker } from "./MapMarker";
 import { useToast } from "@/hooks/use-toast";
+import type { Database } from "@/integrations/supabase/types";
+
+type Coordinates = {
+  latitude?: number | null;
+  longitude?: number | null;
+};
+
+type EventMarker = Database["public"]["Tables"]["events"]["Row"] & Coordinates;
+type AlertMarker = Database["public"]["Tables"]["alerts"]["Row"] & Coordinates;
+type ItemMarker = Database["public"]["Tables"]["marketplace_items"]["Row"] & Coordinates;
 
 interface LocationMapProps {
-  events?: any[];
-  alerts?: any[];
-  items?: any[];
+  events?: EventMarker[];
+  alerts?: AlertMarker[];
+  items?: ItemMarker[];
 }
 
 export function LocationMap({ events = [], alerts = [], items = [] }: LocationMapProps) {
@@ -36,7 +46,7 @@ export function LocationMap({ events = [], alerts = [], items = [] }: LocationMa
               latitude: event.latitude,
               color: "#2F5233",
               title: event.title,
-              description: event.description,
+              description: event.description || undefined,
             })
           );
         }
@@ -50,7 +60,7 @@ export function LocationMap({ events = [], alerts = [], items = [] }: LocationMa
               latitude: alert.latitude,
               color: "#DC2626",
               title: alert.title,
-              description: alert.message,
+              description: alert.message || undefined,
             })
           );
         }

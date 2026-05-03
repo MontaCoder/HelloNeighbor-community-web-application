@@ -11,7 +11,7 @@ interface User {
   avatar_url: string | null;
   online_at?: string;
   status?: "online" | "offline" | "away";
-  neighborhood_id?: string;
+  neighborhood_id?: string | null;
 }
 
 type PresenceRecord = {
@@ -83,10 +83,12 @@ export function ActiveUsersSidebar() {
         updateUsers(onlineUsers);
       })
       .on("presence", { event: "join" }, ({ key, newPresences }) => {
-        console.log("join", key, newPresences);
+        void key;
+        void newPresences;
       })
       .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
-        console.log("leave", key, leftPresences);
+        void key;
+        void leftPresences;
       })
       .subscribe(async (status) => {
         if (status !== "SUBSCRIBED") return;

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { MessageSquare, Bell, Calendar, MapPin, Shield, Users } from "lucide-react";
+import { MessageSquare, Bell, Calendar, MapPin } from "lucide-react";
 
 const features = [
   {

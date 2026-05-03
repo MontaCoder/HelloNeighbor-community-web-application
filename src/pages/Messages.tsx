@@ -2,8 +2,8 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { useEffect, useState } from "react";
-import { MessageSquare, Users } from "lucide-react";
+import { useEffect } from "react";
+import { MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { MessageItem } from "@/components/messages/MessageItem";
 import { MessageInput } from "@/components/messages/MessageInput";
@@ -13,10 +13,12 @@ import { Card } from "@/components/ui/card";
 export default function Messages() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const neighborhoodId = profile?.neighborhood_id;
 
   const { data: messages, refetch } = useQuery({
-    queryKey: ["public-messages", profile?.neighborhood_id],
+    queryKey: ["public-messages", neighborhoodId],
     queryFn: async () => {
+      if (!neighborhoodId) return [];
       const { data, error } = await supabase
         .from("messages")
         .select(
@@ -29,7 +31,7 @@ export default function Messages() {
           )
         `
         )
-        .eq("neighborhood_id", profile?.neighborhood_id)
+        .eq("neighborhood_id", neighborhoodId)
         .is("receiver_id", null)
         .order("created_at", { ascending: true })
         .limit(50);
@@ -37,10 +39,12 @@ export default function Messages() {
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id,
+    enabled: !!neighborhoodId,
   });
 
   useEffect(() => {
+    if (!neighborhoodId) return;
+
     const channel = supabase
       .channel("schema-db-changes")
       .on(
@@ -49,7 +53,7 @@ export default function Messages() {
           event: "*",
           schema: "public",
           table: "messages",
-          filter: `neighborhood_id=eq.${profile?.neighborhood_id}`,
+          filter: `neighborhood_id=eq.${neighborhoodId}`,
         },
         () => {
           refetch();
@@ -60,26 +64,30 @@ export default function Messages() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [refetch, profile?.neighborhood_id]);
+  }, [refetch, neighborhoodId]);
 
   const handleSendMessage = async (content: string, imageUrl?: string) => {
     try {
+      if (!neighborhoodId) return false;
+
       const { error } = await supabase.from("messages").insert({
         content,
         sender_id: user?.id,
         receiver_id: null,
         image_url: imageUrl,
-        neighborhood_id: profile?.neighborhood_id,
+        neighborhood_id: neighborhoodId,
       });
 
       if (error) throw error;
       await refetch();
-    } catch (error) {
+      return true;
+    } catch {
       toast({
         variant: "destructive",
         title: "Error sending message",
         description: "Please try again later.",
       });
+      return false;
     }
   };
 

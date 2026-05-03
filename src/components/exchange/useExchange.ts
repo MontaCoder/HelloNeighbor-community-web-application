@@ -2,33 +2,28 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth/AuthProvider";
-
-type ExchangeFormValues = {
-  title: string;
-  description: string;
-  price: string;
-  category: string;
-  image_urls?: string[];
-};
+import type { ExchangeFormValues } from "./ExchangeForm";
 
 export function useExchange() {
   const { toast } = useToast();
   const { profile } = useAuth();
+  const neighborhoodId = profile?.neighborhood_id;
 
   const { data: items, refetch } = useQuery({
     queryKey: ["marketplace", profile?.neighborhood_id],
     queryFn: async () => {
+      if (!neighborhoodId) return [];
       const { data, error } = await supabase
         .from("marketplace_items")
         .select("*, profiles(full_name)")
         .eq("status", "available")
-        .eq('neighborhood_id', profile?.neighborhood_id)
+        .eq('neighborhood_id', neighborhoodId)
         .order("created_at", { ascending: false });
       
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id
+    enabled: !!neighborhoodId
   });
 
   const handleDelete = async (itemId: string) => {
@@ -66,7 +61,7 @@ export function useExchange() {
           category: values.category,
           image_urls: values.image_urls,
           created_by: user?.id,
-          neighborhood_id: profile?.neighborhood_id
+          neighborhood_id: neighborhoodId
         });
 
       if (error) throw error;
@@ -77,7 +72,7 @@ export function useExchange() {
       });
 
       refetch();
-    } catch (error) {
+    } catch {
       toast({
         title: "Error creating item",
         description: "Please try again later.",
@@ -96,7 +91,7 @@ export function useExchange() {
           price: values.price ? parseFloat(values.price) : null,
           category: values.category,
           image_urls: values.image_urls,
-          neighborhood_id: profile?.neighborhood_id
+          neighborhood_id: neighborhoodId
         })
         .eq("id", itemId);
 
@@ -108,7 +103,7 @@ export function useExchange() {
       });
 
       refetch();
-    } catch (error) {
+    } catch {
       toast({
         title: "Error updating item",
         description: "Please try again later.",

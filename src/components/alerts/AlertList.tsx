@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -10,20 +9,22 @@ import { Badge } from "@/components/ui/badge";
 export function AlertList() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const neighborhoodId = profile?.neighborhood_id;
 
   const { data: alerts, refetch } = useQuery({
     queryKey: ["alerts", profile?.neighborhood_id],
     queryFn: async () => {
+      if (!neighborhoodId) return [];
       const { data, error } = await supabase
         .from("alerts")
         .select("*, profiles:created_by(full_name), neighborhoods:neighborhood_id(name)")
-        .eq("neighborhood_id", profile?.neighborhood_id)
+        .eq("neighborhood_id", neighborhoodId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id,
+    enabled: !!neighborhoodId,
   });
 
   const handleDelete = async (id: string) => {

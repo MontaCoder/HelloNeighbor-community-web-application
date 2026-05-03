@@ -13,7 +13,7 @@ const selectClassName =
 
 type AlertRow = Database["public"]["Tables"]["alerts"]["Row"];
 
-type AlertFormValues = {
+export type AlertFormValues = {
   title: string;
   message: string;
   type: string;

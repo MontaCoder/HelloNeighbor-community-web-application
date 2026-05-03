@@ -5,7 +5,6 @@ import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { ExchangeForm } from "@/components/exchange/ExchangeForm";
 import { ExchangeCard } from "@/components/exchange/ExchangeCard";
 import { useExchange } from "@/components/exchange/useExchange";
-import { Card } from "@/components/ui/card";
 
 export default function Exchange() {
   const { items, handleDelete, handleCreate, handleEdit } = useExchange();

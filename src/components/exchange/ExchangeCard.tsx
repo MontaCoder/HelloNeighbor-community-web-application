@@ -6,11 +6,19 @@ import { ExchangeForm } from "./ExchangeForm";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingBag } from "lucide-react";
+import type { Database } from "@/integrations/supabase/types";
+import type { ExchangeFormValues } from "./ExchangeForm";
+
+type ExchangeItem = Database["public"]["Tables"]["marketplace_items"]["Row"] & {
+  profiles?: {
+    full_name: string | null;
+  } | null;
+};
 
 interface ExchangeCardProps {
-  item: any;
+  item: ExchangeItem;
   onDelete: (itemId: string) => void;
-  onEdit: (itemId: string, values: any) => void;
+  onEdit: (itemId: string, values: ExchangeFormValues) => void;
 }
 
 export function ExchangeCard({ item, onDelete, onEdit }: ExchangeCardProps) {
@@ -48,7 +56,13 @@ export function ExchangeCard({ item, onDelete, onEdit }: ExchangeCardProps) {
                 </DialogTrigger>
                 <ExchangeForm
                   mode="edit"
-                  defaultValues={item}
+                  defaultValues={{
+                    title: item.title,
+                    description: item.description || "",
+                    price: item.price?.toString() || "",
+                    category: item.category || "general",
+                    image_urls: item.image_urls || [],
+                  }}
                   onSubmit={(values) => onEdit(item.id, values)}
                 />
               </Dialog>

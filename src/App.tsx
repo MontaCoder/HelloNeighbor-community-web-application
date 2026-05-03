@@ -1,18 +1,19 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router";
 import { AuthProvider, useAuth } from "./components/auth/AuthProvider";
-import AuthPage from "./components/auth/AuthPage";
-import LocationSetup from "./pages/LocationSetup";
-import Index from "./pages/Index";
-import Events from "./pages/Events";
-import Alerts from "./pages/Alerts";
-import Exchange from "./pages/Exchange";
-import Messages from "./pages/Messages";
-import Neighbors from "./pages/Neighbors";
-import Settings from "./pages/Settings";
-import Admin from "./pages/Admin";
+
+const AuthPage = React.lazy(() => import("./components/auth/AuthPage"));
+const LocationSetup = React.lazy(() => import("./pages/LocationSetup"));
+const Index = React.lazy(() => import("./pages/Index"));
+const Events = React.lazy(() => import("./pages/Events"));
+const Alerts = React.lazy(() => import("./pages/Alerts"));
+const Exchange = React.lazy(() => import("./pages/Exchange"));
+const Messages = React.lazy(() => import("./pages/Messages"));
+const Neighbors = React.lazy(() => import("./pages/Neighbors"));
+const Settings = React.lazy(() => import("./pages/Settings"));
+const Admin = React.lazy(() => import("./pages/Admin"));
 
 // Configure query client with optimized settings
 const queryClient = new QueryClient({
@@ -35,7 +36,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
   
   if (!user) {
-    console.log("User not authenticated, redirecting to auth");
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
   
@@ -46,7 +46,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   
   // Redirect to location setup if user has no verified neighborhood
   if (!profile?.neighborhood_id) {
-    console.log("No neighborhood set, redirecting to location setup");
     return <Navigate to="/location-setup" state={{ from: location }} replace />;
   }
   
@@ -62,30 +61,32 @@ const AppRoutes = React.memo(function AppRoutes() {
   }
 
   return (
-    <Routes>
-      {/* Public routes - accessible without authentication */}
-      <Route path="/auth" element={<AuthPage />} />
-      
-      {/* Location setup route - requires auth but no location */}
-      <Route path="/location-setup" element={
-        user ? <LocationSetup /> : <Navigate to="/auth" />
-      } />
-      
-      {/* Root route - redirect based on auth status */}
-      <Route path="/" element={
-        user ? <Navigate to="/dashboard" /> : <Index />
-      } />
-      
-      {/* Protected routes - require authentication and location */}
-      <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-      <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
-      <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
-      <Route path="/exchange" element={<ProtectedRoute><Exchange /></ProtectedRoute>} />
-      <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
-      <Route path="/neighbors" element={<ProtectedRoute><Neighbors /></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-      <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-    </Routes>
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <Routes>
+        {/* Public routes - accessible without authentication */}
+        <Route path="/auth" element={<AuthPage />} />
+
+        {/* Location setup route - requires auth but no location */}
+        <Route path="/location-setup" element={
+          user ? <LocationSetup /> : <Navigate to="/auth" />
+        } />
+
+        {/* Root route - redirect based on auth status */}
+        <Route path="/" element={
+          user ? <Navigate to="/dashboard" /> : <Index />
+        } />
+
+        {/* Protected routes - require authentication and location */}
+        <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+        <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
+        <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
+        <Route path="/exchange" element={<ProtectedRoute><Exchange /></ProtectedRoute>} />
+        <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+        <Route path="/neighbors" element={<ProtectedRoute><Neighbors /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+      </Routes>
+    </Suspense>
   );
 });
 

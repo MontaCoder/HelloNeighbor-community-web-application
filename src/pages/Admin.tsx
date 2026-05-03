@@ -44,7 +44,7 @@ export default function Admin() {
         description: "You have been logged out of your account",
       });
       navigate("/auth");
-    } catch (error) {
+    } catch {
       toast({
         title: "Error logging out",
         description: "Please try again",

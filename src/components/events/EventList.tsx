@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -11,20 +10,22 @@ import { Badge } from "@/components/ui/badge";
 export function EventList() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const neighborhoodId = profile?.neighborhood_id;
 
   const { data: events, refetch } = useQuery({
     queryKey: ["events", profile?.neighborhood_id],
     queryFn: async () => {
+      if (!neighborhoodId) return [];
       const { data, error } = await supabase
         .from("events")
         .select("*")
-        .eq("neighborhood_id", profile?.neighborhood_id)
+        .eq("neighborhood_id", neighborhoodId)
         .order("start_time", { ascending: true });
 
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id,
+    enabled: !!neighborhoodId,
   });
 
   const handleDelete = async (id: string) => {

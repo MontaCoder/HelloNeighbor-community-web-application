@@ -8,7 +8,7 @@ import { LocationMap } from "@/components/location/LocationMap";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { MapPin, Sparkles, Bell, Calendar } from "lucide-react";
+import { MapPin, Bell, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -20,71 +20,75 @@ const Index = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const neighborhoodId = profile?.neighborhood_id;
 
   const { data: neighborhood, isLoading: neighborhoodLoading } = useQuery({
-    queryKey: ["neighborhood", profile?.neighborhood_id],
+    queryKey: ["neighborhood", neighborhoodId],
     queryFn: async () => {
-      if (!profile?.neighborhood_id) return null;
+      if (!neighborhoodId) return null;
       const { data, error } = await supabase
         .from("neighborhoods")
         .select("name")
-        .eq("id", profile.neighborhood_id)
+        .eq("id", neighborhoodId)
         .single();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id,
+    enabled: !!neighborhoodId,
   });
 
-  const { data: nearbyEvents, isLoading: eventsLoading } = useQuery({
-    queryKey: ["nearby-events", profile?.neighborhood_id],
+  const { data: nearbyEvents } = useQuery({
+    queryKey: ["nearby-events", neighborhoodId],
     queryFn: async () => {
+      if (!neighborhoodId) return [];
       const { data, error } = await supabase
         .from("events")
         .select("*")
-        .eq("neighborhood_id", profile?.neighborhood_id)
+        .eq("neighborhood_id", neighborhoodId)
         .order("start_time", { ascending: true });
 
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id,
+    enabled: !!neighborhoodId,
   });
 
-  const { data: nearbyAlerts, isLoading: alertsLoading } = useQuery({
-    queryKey: ["nearby-alerts", profile?.neighborhood_id],
+  const { data: nearbyAlerts } = useQuery({
+    queryKey: ["nearby-alerts", neighborhoodId],
     queryFn: async () => {
+      if (!neighborhoodId) return [];
       const { data, error } = await supabase
         .from("alerts")
         .select("*")
-        .eq("neighborhood_id", profile?.neighborhood_id)
+        .eq("neighborhood_id", neighborhoodId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id,
+    enabled: !!neighborhoodId,
   });
 
-  const { data: nearbyItems, isLoading: itemsLoading } = useQuery({
-    queryKey: ["nearby-items", profile?.neighborhood_id],
+  const { data: nearbyItems } = useQuery({
+    queryKey: ["nearby-items", neighborhoodId],
     queryFn: async () => {
+      if (!neighborhoodId) return [];
       const { data, error } = await supabase
         .from("marketplace_items")
         .select("*")
-        .eq("neighborhood_id", profile?.neighborhood_id)
+        .eq("neighborhood_id", neighborhoodId)
         .eq("status", "available")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id,
+    enabled: !!neighborhoodId,
   });
 
   useEffect(() => {
-    if (!profile?.neighborhood_id) return;
+    if (!neighborhoodId) return;
 
     const channel = supabase
       .channel("dashboard-updates")
@@ -94,7 +98,7 @@ const Index = () => {
           event: "*",
           schema: "public",
           table: "events",
-          filter: `neighborhood_id=eq.${profile.neighborhood_id}`,
+          filter: `neighborhood_id=eq.${neighborhoodId}`,
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ["nearby-events"] });
@@ -106,7 +110,7 @@ const Index = () => {
           event: "*",
           schema: "public",
           table: "alerts",
-          filter: `neighborhood_id=eq.${profile.neighborhood_id}`,
+          filter: `neighborhood_id=eq.${neighborhoodId}`,
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
@@ -123,7 +127,7 @@ const Index = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile?.neighborhood_id, queryClient, toast]);
+  }, [neighborhoodId, queryClient, toast]);
 
   if (loading) return null;
 

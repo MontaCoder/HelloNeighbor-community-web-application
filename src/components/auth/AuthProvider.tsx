@@ -28,9 +28,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = useCallback(async (userId: string, retryCount = 0) => {
     try {
-      console.log("Fetching profile for user:", userId);
-      
-      // Get current session to ensure fresh access token
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('No active session');
@@ -48,8 +45,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Implement retry logic with exponential backoff
         if (retryCount < 3) {
           const backoffDelay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
-          console.log(`Retrying profile fetch in ${backoffDelay}ms...`);
-          
           setTimeout(() => {
             fetchProfile(userId, retryCount + 1);
           }, backoffDelay);
@@ -92,7 +87,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      console.log("Profile fetched:", profileData);
       setProfile(profileData);
       setLoading(false);
     } catch (error) {
@@ -113,7 +107,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        console.log("Initializing auth...");
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -126,7 +119,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        console.log("Session check complete:", session ? "User logged in" : "No session");
         if (mounted) {
           setUser(session?.user ?? null);
           
@@ -137,9 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        // Set up real-time auth listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-          console.log("Auth state changed:", event, session?.user?.id);
           if (mounted) {
             setUser(session?.user ?? null);
             
@@ -152,7 +142,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         });
 
-        // Store cleanup function
         cleanupSubscription = () => subscription.unsubscribe();
 
       } catch (error) {

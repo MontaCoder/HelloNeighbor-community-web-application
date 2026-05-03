@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 interface UseMapProps {
   latitude?: number | null;
   longitude?: number | null;
-  targetRef: React.RefObject<HTMLDivElement>;
+  targetRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export function useMap({ latitude, longitude, targetRef }: UseMapProps) {

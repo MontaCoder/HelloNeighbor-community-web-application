@@ -15,10 +15,19 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+type MessageWithSender = Database["public"]["Tables"]["messages"]["Row"] & {
+  sender: {
+    full_name: string | null;
+    avatar_url: string | null;
+    username: string | null;
+  } | null;
+};
 
 interface MessageItemProps {
-  message: any;
-  currentUserId: string;
+  message: MessageWithSender;
+  currentUserId?: string;
   onMessageUpdate: () => void;
 }
 
@@ -45,7 +54,7 @@ export function MessageItem({ message, currentUserId, onMessageUpdate }: Message
         description: "Your message has been removed.",
       });
       onMessageUpdate();
-    } catch (error) {
+    } catch {
       toast({
         title: "Error deleting message",
         description: "Please try again later.",
@@ -54,7 +63,7 @@ export function MessageItem({ message, currentUserId, onMessageUpdate }: Message
     }
   };
 
-  const onSubmit = async (values: any) => {
+  const onSubmit = async (values: { content: string }) => {
     try {
       const { error } = await supabase
         .from("messages")
@@ -69,7 +78,7 @@ export function MessageItem({ message, currentUserId, onMessageUpdate }: Message
       });
       setIsEditing(false);
       onMessageUpdate();
-    } catch (error) {
+    } catch {
       toast({
         title: "Error updating message",
         description: "Please try again later.",
@@ -79,6 +88,8 @@ export function MessageItem({ message, currentUserId, onMessageUpdate }: Message
   };
 
   const isOwnMessage = message.sender_id === currentUserId;
+  const sender = message.sender;
+  const senderName = sender?.full_name || sender?.username || "Neighbor";
 
   return (
     <Card
@@ -89,15 +100,15 @@ export function MessageItem({ message, currentUserId, onMessageUpdate }: Message
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <Avatar className="h-9 w-9 ring-2 ring-primary/10">
-            <AvatarImage src={message.sender.avatar_url || ""} />
+            <AvatarImage src={sender?.avatar_url || ""} />
             <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-              {message.sender.full_name?.charAt(0) || "N"}
+              {senderName.charAt(0)}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1 gap-4">
               <p className="font-semibold text-sm text-foreground">
-                {message.sender.full_name || message.sender.username}
+                {senderName}
               </p>
               <span className="text-xs text-muted-foreground flex-shrink-0">
                 {new Date(message.created_at).toLocaleTimeString([], {

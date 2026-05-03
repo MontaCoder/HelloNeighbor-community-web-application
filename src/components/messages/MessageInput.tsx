@@ -6,13 +6,12 @@ import { ImagePlus, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface MessageInputProps {
-  onSendMessage: (content: string, imageUrl?: string) => Promise<void>;
+  onSendMessage: (content: string, imageUrl?: string) => Promise<boolean>;
 }
 
 export function MessageInput({ onSendMessage }: MessageInputProps) {
   const [message, setMessage] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,10 +19,12 @@ export function MessageInput({ onSendMessage }: MessageInputProps) {
     if (!message.trim() && !imageUrl) return;
 
     try {
-      await onSendMessage(message, imageUrl);
-      setMessage("");
-      setImageUrl("");
-    } catch (error) {
+      const sent = await onSendMessage(message, imageUrl);
+      if (sent) {
+        setMessage("");
+        setImageUrl("");
+      }
+    } catch {
       toast({
         title: "Error sending message",
         description: "Please try again later",
@@ -66,7 +67,6 @@ export function MessageInput({ onSendMessage }: MessageInputProps) {
             type="button"
             variant="outline"
             size="icon"
-            disabled={isUploading}
             className="flex-shrink-0"
           >
             <ImagePlus className="h-4 w-4" />
@@ -76,7 +76,7 @@ export function MessageInput({ onSendMessage }: MessageInputProps) {
       <Button
         type="submit"
         size="icon"
-        disabled={(!message.trim() && !imageUrl) || isUploading}
+        disabled={!message.trim() && !imageUrl}
         className="flex-shrink-0 btn-lift"
       >
         <Send className="h-4 w-4" />

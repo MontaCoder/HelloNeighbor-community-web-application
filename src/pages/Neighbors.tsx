@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/layout/AppSidebar";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,28 +20,31 @@ export default function Neighbors() {
   const [selectedNeighbor, setSelectedNeighbor] = useState<NeighborProfile | null>(null);
   const [messageContent, setMessageContent] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const queryClient = useQueryClient();
+  const neighborhoodId = profile?.neighborhood_id;
+  const userId = user?.id;
 
   const { data: neighbors, isLoading } = useQuery({
-    queryKey: ["neighbors", profile?.neighborhood_id],
+    queryKey: ["neighbors", neighborhoodId],
     queryFn: async () => {
+      if (!neighborhoodId || !userId) return [];
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("neighborhood_id", profile?.neighborhood_id)
-        .neq("id", user?.id)
+        .eq("neighborhood_id", neighborhoodId)
+        .neq("id", userId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id,
+    enabled: !!neighborhoodId && !!userId,
   });
 
   const { data: messages, refetch: refetchMessages } = useQuery({
     queryKey: ["private-messages", selectedNeighbor?.id],
-    enabled: !!selectedNeighbor,
+    enabled: !!selectedNeighbor && !!userId,
     queryFn: async () => {
+      if (!selectedNeighbor || !userId) return [];
       const { data, error } = await supabase
         .from("messages")
         .select(
@@ -52,7 +55,7 @@ export default function Neighbors() {
         `
         )
         .or(
-          `and(sender_id.eq.${user?.id},receiver_id.eq.${selectedNeighbor.id}),and(sender_id.eq.${selectedNeighbor.id},receiver_id.eq.${user?.id})`
+          `and(sender_id.eq.${userId},receiver_id.eq.${selectedNeighbor.id}),and(sender_id.eq.${selectedNeighbor.id},receiver_id.eq.${userId})`
         )
         .order("created_at", { ascending: true });
 
@@ -62,20 +65,27 @@ export default function Neighbors() {
   });
 
   useEffect(() => {
-    if (!selectedNeighbor) return;
+    if (!selectedNeighbor || !neighborhoodId || !userId) return;
 
     const channel = supabase
-      .channel("schema-db-changes")
+      .channel(`private-messages-${neighborhoodId}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "messages",
-          filter: `or(and(sender_id.eq.${user?.id},receiver_id.eq.${selectedNeighbor.id}),and(sender_id.eq.${selectedNeighbor.id},receiver_id.eq.${user?.id}))`,
+          filter: `neighborhood_id=eq.${neighborhoodId}`,
         },
-        () => {
-          refetchMessages();
+        (payload) => {
+          const message = payload.new as Database["public"]["Tables"]["messages"]["Row"];
+          const isCurrentConversation =
+            (message.sender_id === userId && message.receiver_id === selectedNeighbor.id) ||
+            (message.sender_id === selectedNeighbor.id && message.receiver_id === userId);
+
+          if (isCurrentConversation) {
+            refetchMessages();
+          }
         }
       )
       .subscribe();
@@ -83,18 +93,18 @@ export default function Neighbors() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedNeighbor, user?.id, refetchMessages]);
+  }, [neighborhoodId, selectedNeighbor, userId, refetchMessages]);
 
   const handleSendPrivateMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageContent.trim() || !selectedNeighbor) return;
+    if (!messageContent.trim() || !selectedNeighbor || !userId || !neighborhoodId) return;
 
     try {
       const { error } = await supabase.from("messages").insert({
         content: messageContent.trim(),
-        sender_id: user?.id,
+        sender_id: userId,
         receiver_id: selectedNeighbor.id,
-        neighborhood_id: profile?.neighborhood_id,
+        neighborhood_id: neighborhoodId,
       });
 
       if (error) throw error;
@@ -104,7 +114,7 @@ export default function Neighbors() {
         title: "Message sent",
         description: `Message sent to ${selectedNeighbor.full_name || selectedNeighbor.username}`,
       });
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Error sending message",

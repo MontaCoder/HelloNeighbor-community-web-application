@@ -3,7 +3,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -18,6 +18,13 @@ export default function SettingsPage() {
     full_name: profile?.full_name || "",
     avatar_url: profile?.avatar_url || "",
   });
+
+  useEffect(() => {
+    setFormData({
+      full_name: profile?.full_name || "",
+      avatar_url: profile?.avatar_url || "",
+    });
+  }, [profile?.avatar_url, profile?.full_name]);
 
   const { data: neighborhood } = useQuery({
     queryKey: ["neighborhood", profile?.neighborhood_id],
@@ -37,11 +44,12 @@ export default function SettingsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!profile?.id) return;
 
     const { error } = await supabase
       .from("profiles")
       .update(formData)
-      .eq("id", profile?.id);
+      .eq("id", profile.id);
 
     if (error) {
       toast({

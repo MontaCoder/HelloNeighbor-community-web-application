@@ -18,9 +18,6 @@ export default function LocationSetup() {
   const { user } = useAuth();
   const { detectLocation, loading: locationLoading } = useLocation();
   const [noAccess, setNoAccess] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<unknown>(null);
-
-  console.log("LocationSetup rendering, user:", user); // Debug log
 
   // Check if user is admin
   const { data: isAdmin, isLoading: isAdminLoading, isError: isAdminError } = useQuery({
@@ -39,27 +36,9 @@ export default function LocationSetup() {
     enabled: !!user
   });
 
-  // Fetch neighborhoods for debugging
-  const { data: neighborhoods } = useQuery({
-    queryKey: ["neighborhoods"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('neighborhoods')
-        .select('*')
-        .order('name');
-      
-      if (error) {
-        console.error("Error fetching neighborhoods:", error);
-        throw error;
-      }
-      return data;
-    }
-  });
-
   // Redirect admin users to admin panel
   useEffect(() => {
     if (isAdmin === true) {
-      console.log("User is admin, redirecting to admin panel");
       navigate("/admin");
     }
   }, [isAdmin, navigate]);
@@ -68,18 +47,9 @@ export default function LocationSetup() {
   useEffect(() => {
     const checkLocation = async () => {
       try {
-        console.log("Starting location verification...");
         const success = await detectLocation();
         if (!success) {
-          console.log("Location verification failed");
           setNoAccess(true);
-          // Get debug info
-          const { data: debug } = await supabase
-            .from('neighborhoods')
-            .select('id, name, boundaries')
-            .limit(1);
-          setDebugInfo(debug);
-          console.log("Debug info:", debug);
         }
       } catch (error) {
         console.error('Error detecting location:', error);
@@ -179,16 +149,6 @@ export default function LocationSetup() {
                   'Retry Location Detection'
                 )}
               </Button>
-              {debugInfo && (
-                <Alert>
-                  <AlertTitle>Debug Information</AlertTitle>
-                  <AlertDescription>
-                    <pre className="mt-2 w-full overflow-auto text-xs">
-                      {JSON.stringify(debugInfo, null, 2)}
-                    </pre>
-                  </AlertDescription>
-                </Alert>
-              )}
             </>
           ) : (
             <div className="space-y-4">
