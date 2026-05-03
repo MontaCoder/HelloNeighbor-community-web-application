@@ -35,9 +35,13 @@ export function ImageUpload({ onImageUploaded, existingUrl, children }: ImageUpl
       const previewUrl = await createImageUrl(file);
       setPreview(previewUrl);
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw userError || new Error("User must be signed in to upload images");
+      }
+
+      const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const filePath = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('app-uploads')
