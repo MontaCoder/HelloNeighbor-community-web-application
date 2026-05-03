@@ -4,11 +4,13 @@ import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { EventForm } from "@/components/events/EventForm";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Badge } from "@/components/ui/badge";
+import type { Database } from "@/integrations/supabase/types";
+import type { EventFormValues } from "@/components/events/EventForm";
 
 interface EventCardProps {
-  event: any;
+  event: Database["public"]["Tables"]["events"]["Row"];
   onDelete: (eventId: string) => void;
-  onEdit: (eventId: string, values: any) => void;
+  onEdit: (eventId: string, values: EventFormValues) => void;
 }
 
 export function EventCard({ event, onDelete, onEdit }: EventCardProps) {
@@ -65,7 +67,14 @@ export function EventCard({ event, onDelete, onEdit }: EventCardProps) {
               </DialogTrigger>
               <EventForm
                 mode="edit"
-                defaultValues={event}
+                defaultValues={{
+                  title: event.title,
+                  description: event.description || "",
+                  location: event.location || "",
+                  start_time: event.start_time,
+                  end_time: event.end_time,
+                  image_url: event.image_url || "",
+                }}
                 onSubmit={(values) => onEdit(event.id, values)}
               />
             </Dialog>

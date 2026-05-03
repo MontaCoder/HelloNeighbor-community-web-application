@@ -1,16 +1,41 @@
 import { AppSidebar } from "@/components/layout/AppSidebar";
-import { EventForm } from "@/components/events/EventForm";
+import { EventForm, type EventFormValues } from "@/components/events/EventForm";
 import { EventList } from "@/components/events/EventList";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Calendar } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Events() {
   const queryClient = useQueryClient();
+  const { user, profile } = useAuth();
+  const { toast } = useToast();
 
-  const handleEventCreated = () => {
+  const handleEventCreated = async (values: EventFormValues) => {
+    const { error } = await supabase
+      .from("events")
+      .insert({
+        title: values.title,
+        description: values.description,
+        location: values.location,
+        start_time: values.start_time,
+        end_time: values.end_time,
+        image_url: values.image_url,
+        created_by: user?.id,
+        neighborhood_id: profile?.neighborhood_id,
+      });
+
+    if (error) throw error;
+
+    toast({
+      title: "Event created",
+      description: "Your event has been posted successfully.",
+    });
+
     queryClient.invalidateQueries({ queryKey: ["events"] });
   };
 

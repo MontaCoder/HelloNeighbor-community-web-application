@@ -1,24 +1,30 @@
-import { useForm } from "react-hook-form";
-import { useAuth } from "@/components/auth/AuthProvider";
+import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/shared/ImageUpload";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
+export type EventFormValues = {
+  title: string;
+  description: string;
+  location: string;
+  start_time: string;
+  end_time: string;
+  image_url: string;
+};
+
 interface EventFormProps {
-  onSubmit: (values: any) => void;
-  defaultValues?: any;
+  onSubmit: (values: EventFormValues) => Promise<void> | void;
+  defaultValues?: Partial<EventFormValues>;
   mode?: 'create' | 'edit';
 }
 
 export function EventForm({ onSubmit, defaultValues = {}, mode = 'create' }: EventFormProps) {
-  const { user, profile } = useAuth();
   const { toast } = useToast();
-  const form = useForm({
+  const form = useForm<EventFormValues>({
     defaultValues: {
       title: "",
       description: "",
@@ -29,10 +35,10 @@ export function EventForm({ onSubmit, defaultValues = {}, mode = 'create' }: Eve
       ...defaultValues
     }
   });
+  const imageUrl = useWatch({ control: form.control, name: "image_url" });
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: EventFormValues) => {
     try {
-      // Validate timestamps
       if (!values.start_time || !values.end_time) {
         toast({
           title: "Error",
@@ -42,11 +48,9 @@ export function EventForm({ onSubmit, defaultValues = {}, mode = 'create' }: Eve
         return;
       }
 
-      // Ensure the timestamps are valid
       const startTime = new Date(values.start_time).toISOString();
       const endTime = new Date(values.end_time).toISOString();
 
-      // Validate end time is after start time
       if (new Date(endTime) <= new Date(startTime)) {
         toast({
           title: "Error",
@@ -56,33 +60,18 @@ export function EventForm({ onSubmit, defaultValues = {}, mode = 'create' }: Eve
         return;
       }
 
-      const { error } = await supabase
-        .from("events")
-        .insert({
-          title: values.title,
-          description: values.description,
-          location: values.location,
-          start_time: startTime,
-          end_time: endTime,
-          image_url: values.image_url,
-          created_by: user?.id,
-          neighborhood_id: profile?.neighborhood_id
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Event created",
-        description: "Your event has been posted successfully."
+      await onSubmit({
+        ...values,
+        start_time: startTime,
+        end_time: endTime,
       });
 
       form.reset();
-      onSubmit(values);
     } catch (error) {
       console.error('Error creating event:', error);
       toast({
         title: "Error",
-        description: "There was a problem creating your event.",
+        description: `There was a problem ${mode === "create" ? "creating" : "updating"} your event.`,
         variant: "destructive"
       });
     }
@@ -149,7 +138,7 @@ export function EventForm({ onSubmit, defaultValues = {}, mode = 'create' }: Eve
         <div className="space-y-2">
           <Label>Event Image</Label>
           <ImageUpload
-            existingUrl={form.watch("image_url")}
+            existingUrl={imageUrl}
             onImageUploaded={(url) => form.setValue("image_url", url)}
           />
         </div>

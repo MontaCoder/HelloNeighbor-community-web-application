@@ -4,7 +4,7 @@ import { EventCard } from "./events/EventCard";
 import { useEvents } from "./events/useEvents";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import { EventForm } from "./events/EventForm";
+import { EventForm } from "@/components/events/EventForm";
 import { useNavigate } from "react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 

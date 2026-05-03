@@ -2,18 +2,21 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth/AuthProvider";
+import type { EventFormValues } from "@/components/events/EventForm";
 
 export function useEvents() {
   const { toast } = useToast();
   const { profile, user } = useAuth();
+  const neighborhoodId = profile?.neighborhood_id;
 
   const { data: events, isLoading, refetch } = useQuery({
     queryKey: ["events-preview", profile?.neighborhood_id],
     queryFn: async () => {
+      if (!neighborhoodId) return [];
       const { data, error } = await supabase
         .from("events")
         .select("*")
-        .eq('neighborhood_id', profile?.neighborhood_id)
+        .eq('neighborhood_id', neighborhoodId)
         .gte("start_time", new Date().toISOString())
         .order("start_time", { ascending: true })
         .limit(3);
@@ -21,7 +24,7 @@ export function useEvents() {
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id
+    enabled: !!neighborhoodId
   });
 
   const handleDelete = async (eventId: string) => {
@@ -46,7 +49,7 @@ export function useEvents() {
     refetch();
   };
 
-  const handleEdit = async (eventId: string, values: any) => {
+  const handleEdit = async (eventId: string, values: EventFormValues) => {
     try {
       const { error } = await supabase
         .from("events")
@@ -57,7 +60,7 @@ export function useEvents() {
           start_time: values.start_time,
           end_time: values.end_time,
           image_url: values.image_url,
-          neighborhood_id: profile?.neighborhood_id
+          neighborhood_id: neighborhoodId
         })
         .eq("id", eventId);
 
@@ -69,7 +72,7 @@ export function useEvents() {
       });
 
       refetch();
-    } catch (error) {
+    } catch {
       toast({
         title: "Error updating event",
         description: "Please try again later.",
@@ -78,7 +81,7 @@ export function useEvents() {
     }
   };
 
-  const handleCreate = async (values: any) => {
+  const handleCreate = async (values: EventFormValues) => {
     try {
       const { error } = await supabase
         .from("events")
@@ -90,7 +93,7 @@ export function useEvents() {
           end_time: values.end_time,
           image_url: values.image_url,
           created_by: user?.id,
-          neighborhood_id: profile?.neighborhood_id
+          neighborhood_id: neighborhoodId
         });
 
       if (error) throw error;
@@ -101,7 +104,7 @@ export function useEvents() {
       });
 
       refetch();
-    } catch (error) {
+    } catch {
       toast({
         title: "Error creating event",
         description: "Please try again later.",
