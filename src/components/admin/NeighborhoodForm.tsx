@@ -28,21 +28,15 @@ import {
   type CityBoundarySuggestion,
   searchCityBoundaries,
 } from "@/lib/cityBoundarySearch";
+import type { Json } from "@/integrations/supabase/types";
 
 type NeighborhoodFormData = {
   name: string;
   description: string;
 };
 
-type NeighborhoodBoundaryFeature = {
-  type: "Feature";
-  geometry: BoundaryGeometry;
-  properties: Record<string, unknown>;
-};
-
 const DEFAULT_CENTER: [number, number] = [0, 20];
 const DEFAULT_ZOOM = 2;
-const DEBOUNCE_DELAY_MS = 500;
 
 const getBoundaryFromFeature = (
   feature: Feature<Geometry>,
@@ -157,6 +151,7 @@ export default function NeighborhoodForm() {
 
       setSelectedCity(city);
       setCityQuery(city.label);
+      setDebouncedCityQuery(city.label);
       setCitySuggestions([]);
       setCitySearchError(null);
       setValue("name", city.city, { shouldDirty: true, shouldValidate: true });
@@ -185,7 +180,7 @@ export default function NeighborhoodForm() {
           dataProjection: "EPSG:4326",
           featureProjection: "EPSG:3857",
         }
-      );
+      ) as Feature<Geometry>;
 
       vectorSourceRef.current.clear();
       vectorSourceRef.current.addFeature(feature as Feature<Geometry>);
@@ -267,13 +262,9 @@ export default function NeighborhoodForm() {
     };
   }, [syncBoundaryFromSource]);
 
-  useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      setDebouncedCityQuery(cityQuery.trim());
-    }, DEBOUNCE_DELAY_MS);
-
-    return () => window.clearTimeout(timeout);
-  }, [cityQuery]);
+  const handleSearchCity = () => {
+    setDebouncedCityQuery(cityQuery.trim());
+  };
 
   useEffect(() => {
     if (selectedCity && debouncedCityQuery === selectedCity.label) {
@@ -350,7 +341,7 @@ export default function NeighborhoodForm() {
     setIsSubmitting(true);
     let newNeighborhoodId: string | null = null;
 
-    const boundaryProperties: Record<string, unknown> = {
+    const boundaryProperties: Record<string, Json> = {
       source: selectedCity ? "nominatim" : "manual",
     };
 
@@ -360,9 +351,9 @@ export default function NeighborhoodForm() {
       boundaryProperties.display_name = selectedCity.displayName;
     }
 
-    const boundaryFeature: NeighborhoodBoundaryFeature = {
+    const boundaryFeature: Json = {
       type: "Feature",
-      geometry: boundaryGeometry,
+      geometry: boundaryGeometry as unknown as Json,
       properties: boundaryProperties,
     };
 
@@ -384,13 +375,10 @@ export default function NeighborhoodForm() {
 
       newNeighborhoodId = newNeighborhood.id;
 
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({
-          neighborhood_id: newNeighborhoodId,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
+      const { error: updateError } = await supabase.rpc("admin_set_user_neighborhood", {
+        target_user_id: user.id,
+        target_neighborhood_id: newNeighborhoodId,
+      });
 
       if (updateError) {
         console.error("Failed to auto-assign neighborhood:", updateError);
@@ -432,16 +420,26 @@ export default function NeighborhoodForm() {
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Input
-              placeholder="Search for any city worldwide"
-              value={cityQuery}
-              onChange={(event) => {
-                setCityQuery(event.target.value);
-                setCitySelectionNotice(null);
-              }}
-            />
+            <div className="flex gap-2">
+              <Input
+                placeholder="Search for any city worldwide"
+                value={cityQuery}
+                onChange={(event) => {
+                  setCityQuery(event.target.value);
+                  setCitySelectionNotice(null);
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSearchCity}
+                disabled={cityQuery.trim().length < 3 || isSearchingCities}
+              >
+                Search
+              </Button>
+            </div>
             <p className="text-xs text-muted-foreground">
-              Type at least 3 characters, then choose a city suggestion to load its boundary.
+              Type at least 3 characters, search, then choose a city suggestion to load its boundary.
             </p>
 
             {isSearchingCities && (
@@ -520,7 +518,7 @@ export default function NeighborhoodForm() {
             <Alert>
               <InfoIcon className="h-4 w-4" />
               <AlertDescription>
-                Select a city from search to auto-load boundaries, or click the map to draw manually.
+                Select a city from search to load boundaries, or click the map to draw manually.
               </AlertDescription>
             </Alert>
           )}
