@@ -14,20 +14,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useNavigate } from "react-router";
 
 export default function NeighborhoodList() {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [managingNeighborhood, setManagingNeighborhood] = useState<string | null>(null);
 
   const handleGoTo = async (neighborhoodId: string) => {
     if (!user?.id) return;
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({ neighborhood_id: neighborhoodId, updated_at: new Date().toISOString() })
-      .eq('id', user.id);
+    const { error } = await supabase.rpc("admin_set_user_neighborhood", {
+      target_user_id: user.id,
+      target_neighborhood_id: neighborhoodId,
+    });
 
     if (error) {
       toast({
@@ -39,7 +41,7 @@ export default function NeighborhoodList() {
     }
 
     queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
-    window.location.href = '/dashboard';
+    navigate('/dashboard');
   };
 
   const { data: neighborhoods, isLoading, error } = useQuery({
@@ -70,10 +72,10 @@ export default function NeighborhoodList() {
   });
 
   const handleRemoveUser = async (userId: string) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ neighborhood_id: null })
-      .eq('id', userId);
+    const { error } = await supabase.rpc("admin_set_user_neighborhood", {
+      target_user_id: userId,
+      target_neighborhood_id: null,
+    });
 
     if (error) {
       toast({
