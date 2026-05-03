@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCard } from "./AlertCard";
+import { AlertCard, type AlertFormValues } from "./AlertCard";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router";
@@ -13,21 +13,23 @@ export function AlertsPreview() {
   const { toast } = useToast();
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const neighborhoodId = profile?.neighborhood_id;
 
   const { data: alerts, isLoading, refetch } = useQuery({
     queryKey: ["alerts-preview", profile?.neighborhood_id],
     queryFn: async () => {
+      if (!neighborhoodId) return [];
       const { data, error } = await supabase
         .from("alerts")
         .select("*")
-        .eq("neighborhood_id", profile?.neighborhood_id)
+        .eq("neighborhood_id", neighborhoodId)
         .order("created_at", { ascending: false })
         .limit(3);
 
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.neighborhood_id,
+    enabled: !!neighborhoodId,
   });
 
   const handleDelete = async (alertId: string) => {
@@ -49,7 +51,7 @@ export function AlertsPreview() {
     refetch();
   };
 
-  const handleEdit = async (alertId: string, values: any) => {
+  const handleEdit = async (alertId: string, values: AlertFormValues) => {
     try {
       const { error } = await supabase
         .from("alerts")
@@ -70,7 +72,7 @@ export function AlertsPreview() {
       });
 
       refetch();
-    } catch (error) {
+    } catch {
       toast({
         title: "Error updating alert",
         description: "Please try again later.",
