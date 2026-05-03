@@ -1,6 +1,9 @@
 CREATE OR REPLACE FUNCTION public.find_neighborhood(lat double precision, lon double precision)
 RETURNS uuid
 LANGUAGE plpgsql
+SECURITY DEFINER
+STABLE
+SET search_path = public
 AS $$
 DECLARE
     neighborhood_id uuid;
@@ -27,3 +30,6 @@ BEGIN
     RETURN neighborhood_id;
 END;
 $$;
+
+REVOKE EXECUTE ON FUNCTION public.find_neighborhood(double precision, double precision) FROM public;
+GRANT EXECUTE ON FUNCTION public.find_neighborhood(double precision, double precision) TO authenticated;

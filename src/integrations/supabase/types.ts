@@ -857,7 +857,7 @@ export type Database = {
           lat: number
           lon: number
         }
-        Returns: string
+        Returns: string | null
       }
       geography:
         | {
@@ -1291,6 +1291,13 @@ export type Database = {
           user_id: string
         }
         Returns: boolean
+      }
+      admin_set_user_neighborhood: {
+        Args: {
+          target_user_id: string
+          target_neighborhood_id: string | null
+        }
+        Returns: undefined
       }
       json: {
         Args: {
