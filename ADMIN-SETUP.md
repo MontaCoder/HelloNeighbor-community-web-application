@@ -11,7 +11,7 @@ Your app uses Supabase Auth with role-based access control. Here's how to become
 1. Go to https://app.supabase.com/project/hrmplyapfvzgcqignrhz
 2. Navigate to **SQL Editor** 📝 (in left sidebar)
 3. Click **"New query"**
-4. Open `backup-fixed.sql` from your project
+4. Open `schema.sql` from your project
 5. Copy **ALL** contents and paste into SQL Editor
 6. Click **"Run"** (or press Ctrl+Enter)
 7. Wait for success message ✅
@@ -22,7 +22,7 @@ Your app uses Supabase Auth with role-based access control. Here's how to become
 
 ### Option A: Through the App (Recommended)
 1. Start your dev server: `npm run dev`
-2. Open http://localhost:5173
+2. Open http://localhost:8080
 3. Click **"Sign Up"** or go to `/auth`
 4. Enter your email and password
 5. Click **"Sign Up"**
@@ -71,7 +71,7 @@ After creating your account, you need to manually add admin role to the database
 
 ## **Step 4: Test Admin Access**
 
-1. Refresh your app or navigate to http://localhost:5173/admin
+1. Refresh your app or navigate to http://localhost:8080/admin
 2. You should now see the **Admin Panel** with:
    - Neighborhood management
    - Create/Delete neighborhoods

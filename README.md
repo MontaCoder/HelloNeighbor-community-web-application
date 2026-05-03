@@ -30,21 +30,20 @@ A community-focused web application connecting neighbors through localized commu
 
 ### Community Engagement
 - Location-verified neighborhood access
-- Event management with RSVP tracking
+- Event creation and neighborhood event discovery
 - Real-time emergency alerts
 - Neighborhood chat channels
 
 ### Marketplace
 - Local item exchange platform
-- Geo-fenced search radius
+- Neighborhood-scoped marketplace listings
 - Image upload for listings
-- Peer-to-peer rating system
 
 ### Security and Privacy
-- GPS verification with fallback
-- Role-based access control
-- End-to-end encryption for messages
-- Anonymous reporting system
+- GPS-based neighborhood verification
+- Supabase Auth with Row Level Security
+- Role-based admin access control
+- Neighborhood-scoped data access
 
 ## Tech Stack
 
@@ -76,7 +75,6 @@ A community-focused web application connecting neighbors through localized commu
 | PostGIS | Geographic data handling |
 | Row Level Security (RLS) | Access control |
 | Storage Buckets | File uploads |
-| Edge Functions | Serverless logic |
 | Realtime API | Live updates |
 
 ## Installation
@@ -104,20 +102,19 @@ npm install
 Create a `.env` file in the project root:
 ```env
 VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 ```
 
 4. Set up the Supabase database
 - Create a new Supabase project
-- Run the SQL migration in `backup.sql`
-- Apply the RLS fixes in `fix-rls-policies.sql`
+- Run the SQL schema in `schema.sql`
 
 5. Start the development server
 ```bash
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173`.
+The application will be available at `http://localhost:8080`.
 
 ## Scripts
 
@@ -135,17 +132,18 @@ The application uses PostgreSQL with PostGIS for geographic data. Key tables inc
 - `neighborhoods` - community boundaries and settings
 - `posts` - community posts and announcements
 - `events` - local events with RSVP tracking
-- `marketplace_listings` - item exchange platform
+- `marketplace_items` - item exchange platform
 - `messages` - neighborhood chat conversations
 - `alerts` - emergency notifications
 
-See `backup.sql` for the full schema and `fix-rls-policies.sql` for the access control updates.
+See `schema.sql` for the full schema.
 
 ## Development Notes
 
 - The app uses OpenLayers for mapping and geospatial interactions, not Mapbox or Leaflet.
 - Supabase handles authentication, database access, storage, and realtime updates.
 - The current stack is aligned with React 19, TypeScript 6, Vite 8, and Tailwind CSS 4.
+- Admin city-boundary lookup uses OpenStreetMap Nominatim. For production traffic, add compliant attribution, caching, and preferably a server-side proxy or paid geocoding provider instead of browser-driven lookup.
 
 ## Roadmap
 
